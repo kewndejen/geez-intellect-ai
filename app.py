@@ -13,9 +13,10 @@ else:
     st.error("API Key አልተገኘም! እባክህ በ Settings ውስጥ 'GOOGLE_API_KEY' አክል")
     st.stop()
 
-# 3. ሞዴሉን ማዘጋጀት
+# 3. ሞዴሉን ማዘጋጀት (በሙከራህ የሰራውን gemini-2.0-flash እንጠቀማለን)
+# ይህ ስሪት በጣም ፈጣን እና ለነፃ አገልግሎት የተሻለ ነው
 model = genai.GenerativeModel(
-    model_name='gemini-1.5-flash',
+    model_name='gemini-2.0-flash',
     system_instruction="አንተ 'Ge'ez Sage' የተባልክ የግዕዝ ቋንቋ እና የቅኔ ሊቅ ነህ። መልስህ ሁልጊዜ ጥልቅ እና አስተማሪ ይሁን።"
 )
 
@@ -43,6 +44,8 @@ if prompt := st.chat_input("የግዕዝ ጥያቄዎን እዚህ ይጻፉ..."
         except Exception as e:
             error_msg = str(e)
             if "429" in error_msg or "ResourceExhausted" in error_msg:
-                st.warning("⚠️ ይቅርታ፣ የነፃ አገልግሎት ገደብ ላይ ደርሻለሁ። እባክህ ከ1 ደቂቃ በኋላ ድገመው።")
+                st.warning("⚠️ የነፃ አገልግሎት ገደብ ላይ ደርሻለሁ። እባክህ ከ1 ደቂቃ በኋላ ድገመው።")
+            elif "404" in error_msg:
+                st.error("ሞዴሉ አልተገኘም። እባክህ ኮዱን በ 'gemini-2.5-flash' ቀይረህ ሞክር።")
             else:
                 st.error(f"ስህተት ተፈጥሯል፦ {e}")
