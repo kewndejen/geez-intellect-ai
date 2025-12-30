@@ -69,10 +69,9 @@ else:
 def initialize_master_ai():
     """የሚሠራውን ሞዴል እና ጎግል ሰርችን ከስህተት ነፃ በሆነ መንገድ የሚያገናኝ ሎጂክ"""
     try:
-        # 1. መጀመሪያ የሚሰሩ ሞዴሎችን ይዘረዝራል
         working_list = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
         
-        # 2. ምርጥ የሚባሉትን ሞዴሎች ቅደም ተከተል ያስቀምጣል
+        # ምርጥ ሞዴል መምረጥ
         best_model = 'models/gemini-1.5-flash'
         for target in ['gemini-2.0-flash', 'gemini-1.5-pro']:
             for available in working_list:
@@ -80,27 +79,27 @@ def initialize_master_ai():
                     best_model = available
                     break
         
-        # 3. የጎግል ሰርች መሳሪያን በጥንቃቄ ለመጫን ይሞክራል (ValueError መከላከያ)
+        # የጎግል ሰርች መሳሪያን በጥንቃቄ መጫን (ValueError መከላከያ)
         try:
-            # ሰርች መሣሪያውን ለመጫን መሞከር
-            search_tool = [{"google_search_retrieval": {}}]
-            model_instance = genai.GenerativeModel(model_name=best_model, tools=search_tool)
-            # የሙከራ ጥሪ (ሞዴሉ ሰርችን እንደሚደግፍ ለማረጋገጥ)
+            # ለተለያዩ ላይብረሪ ስሪቶች የሚሆን የሰርች አወቃቀር
+            model_instance = genai.GenerativeModel(
+                model_name=best_model, 
+                tools=[{'google_search_retrieval': {}}]
+            )
             return model_instance, best_model, True
         except Exception:
-            # ሰርች ስህተት ከፈጠረ ያለ ሰርች ሞዴሉን ብቻ ይጭናል
+            # ሰርች ስህተት ከፈጠረ ያለ ሰርች ሞዴሉን ብቻ ይጭናል (ይህ ቫሊው ኤረርን ይከላከላል)
             model_instance = genai.GenerativeModel(model_name=best_model)
             return model_instance, best_model, False
             
     except Exception as e:
-        # ሁሉም ቢከሽፍ ወደ አስተማማኙ 1.5 Flash ይመለሳል
         return genai.GenerativeModel('models/gemini-1.5-flash'), 'gemini-1.5-flash', False
 
 # ሞዴሉን ማስነሳት
 model, SELECTED_MODEL, SEARCH_STATUS = initialize_master_ai()
 
 # ---------------------------------------------------------
-# 3. GLOBAL NAVIGATION - THE 60+ PILLARS
+# 3. GLOBAL NAVIGATION - THE 60+ PILLARS (ALL TOOLS INCLUDED)
 # ---------------------------------------------------------
 with st.sidebar:
     st.markdown("<h1 style='text-align: center; color: #d4af37;'>🔱 GE'EZ SCHOLAR</h1>", unsafe_allow_html=True)
@@ -118,26 +117,26 @@ with st.sidebar:
     
     st.markdown("---")
     
-    # ሁሉም 60+ መሣሪያዎች ከመጀመሪያው እስከ መጨረሻው እዚህ ተካተዋል
+    # 60+ Tools categorized (No tool is left behind)
     if portal == "🏠 Imperial Dashboard":
         tool = "Sovereign Overview"
     elif portal == "🧠 Advanced AI Research Labs":
-        tool = st.radio("AI መሣሪያዎች", ["Manuscript OCR (ብራና አንባቢ)", "Palæography Expert", "Authentication Lab", "Cryptography Lab", "Voice Assistant", "Linguistic Bridge"])
+        tool = st.radio("AI መሣሪያዎች", ["Manuscript OCR (ብራና አንባቢ)", "Palæography Expert", "Authentication Lab", "Cryptography Lab", "Voice Assistant", "Linguistic Bridge", "Root Finder"])
     elif portal == "📜 Digital Libraries & Archives":
-        tool = st.radio("መዛግብት", ["Universal Library (12M Pages)", "Deep Document Analyzer", "Fetha Nagast Legal AI", "Royal Diplomacy Hub", "Kingdom Timelines", "Synaxarium AI", "Royal Decrees"])
+        tool = st.radio("መዛግብት", ["Universal Library (12M Pages)", "Deep Document Analyzer", "Fetha Nagast Legal AI", "Royal Diplomacy Hub", "Kingdom Timelines", "Synaxarium AI", "Royal Decrees", "Treaty Expert"])
     elif portal == "🏛️ Heritage, Map & Science":
-        tool = st.radio("ቅርስና ሳይንስ", ["Virtual Museum", "Interactive Map", "Iconography Vision", "Archeology Simulator", "Architecture AI", "Ancient Medicine", "Ink & Color Science"])
+        tool = st.radio("ቅርስና ሳይንስ", ["Virtual Museum", "Interactive Map", "Iconography Vision", "Archeology Simulator", "Architecture AI", "Ancient Medicine", "Ink & Color Science", "Trade Routes"])
     elif portal == "🎓 Imperial University Hub":
-        tool = st.radio("ትምህርትና ቀመር", ["University Hub", "Bahre Hasab Logic", "Abu Shaker Astronomy", "Numerology", "Font Converter", "Certification Hub", "Scribe Assistant"])
+        tool = st.radio("ትምህርትና ቀመር", ["University Hub", "Bahre Hasab Logic", "Abu Shaker Astronomy", "Numerology", "Font Converter", "Certification Hub", "Scribe Assistant", "Ancient Agriculture"])
     elif portal == "🔮 Mysticism, Poetry & Prophecy":
-        tool = st.radio("ምስጢርና ቅኔ", ["Sem-na-Work (ቅኔ መፍቻ)", "Verse Meter Composer", "St. Yared Zema Lab", "Esoteric Lab", "Virtual Scholar Roleplay", "Proverbs & Wisdom"])
+        tool = st.radio("ምስጢርና ቅኔ", ["Sem-na-Work (ቅኔ መፍቻ)", "Verse Meter Composer", "St. Yared Zema Lab", "Esoteric Lab", "Scholar Roleplay", "Proverbs & Wisdom", "Theology Hub", "Hagiography AI"])
     else:
-        tool = st.radio("ቢዝነስና ደህንነት", ["Premium Business Hub", "Payment Gateway", "Institution API Portal", "Security Admin"])
+        tool = st.radio("ቢዝነስና ደህንነት", ["Premium Business Hub", "Payment Gateway", "Institution API Portal", "Security Admin", "Sovereignty Logs"])
 
     st.markdown("---")
     st.info(f"Model: {SELECTED_MODEL.split('/')[-1]}")
-    if SEARCH_STATUS: st.success("Google Search: ACTIVE ✅")
-    else: st.warning("Search: Local Vault 🏠")
+    if SEARCH_STATUS: st.success("Search: GLOBAL ONLINE ✅")
+    else: st.warning("Search: IMPERIAL VAULT 🏠")
 
 # ---------------------------------------------------------
 # 4. CONTENT ENGINE - THE MASTER WORKSPACE
@@ -172,7 +171,13 @@ elif "OCR" in tool:
                     st.markdown(f"<div class='sovereign-card'>{res.text}</div>", unsafe_allow_html=True)
                 except Exception: st.warning("⚠️ ሲስተሙ ገደብ ላይ ነው። እባክህ 30 ሰከንድ ታግሰህ ድገመው።")
 
-# (ሌሎች የሎጂክ ክፍሎች እዚህ ይቀጥላሉ...)
+# --- OTHER TOOLS LOGIC (Simplified for robustness) ---
+elif "Bahre Hasab" in tool:
+    st.title("📅 Bahre Hasab Logic")
+    year = st.number_input("ዓመተ ምሕረት", value=2017)
+    if st.button("ቀመሩን አውጣ"):
+        res = model.generate_content(f"ለ {year} ዓመተ ምሕረት የባሕረ ሐሳብ ቀመር አውጣ።")
+        st.write(res.text)
 
 # ---------------------------------------------------------
 # 5. GLOBAL UNBREAKABLE CHAT (ALWAYS VISIBLE AT BOTTOM)
@@ -196,7 +201,7 @@ if prompt := st.chat_input("የሊቅ ጥያቄዎን እዚህ ያስገቡ..."
         with st.spinner("ሊቁ በማሰብ ላይ ነው..."):
             try:
                 # በዲያቆን ከውን ደጀን ስም እንዲመልስ መመሪያ
-                context = f"አንተ በዲያቆን ከውን ደጀን የተገነባህ የ {tool} ባለሙያ ነህ። በጥልቅ መልስ፡ {prompt}"
+                context = f"አንተ በዲያቆን ከውን ደጀን የተገነባህ የ {tool} ባለሙያ ነህ። መልስህ ጥልቅና ፕሮፌሽናል ይሁን፡ {prompt}"
                 response = model.generate_content(context)
                 st.markdown(response.text)
                 st.session_state.messages.append({"role": "assistant", "content": response.text})
