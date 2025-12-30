@@ -5,6 +5,205 @@ import datetime
 import time
 
 # ---------------------------------------------------------
+# 1. IMPERIAL GLOBAL CONFIGURATION (Studio Style)
+# ---------------------------------------------------------
+st.set_page_config(
+    page_title="Ge'ez Scholar AI Studio",
+    page_icon="🔱",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Professional Enterprise CSS (Gemini Studio Aesthetic)
+st.markdown("""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Cinzel:wght@700&display=swap');
+    
+    html, body, [class*="css"] { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
+    
+    /* Top Bar Styling */
+    .top-bar {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 10px 20px; background: white; border-bottom: 1px solid #ddd;
+        position: sticky; top: 0; z-index: 999;
+    }
+    
+    /* Sidebar Styling */
+    .stSidebar { background-color: #ffffff !important; border-right: 1px solid #e0e0e0; }
+    
+    /* Chat Input Styling (Gemini Studio Style) */
+    [data-testid="stChatInput"] {
+        position: fixed; bottom: 20px; left: 20%; right: 20%;
+        background: white !important; border: 1px solid #1a73e8 !important;
+        border-radius: 30px !important; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    /* Custom Sovereign Buttons */
+    .stButton>button {
+        border-radius: 8px; font-weight: 600; transition: 0.3s;
+    }
+    
+    .main-header { color: #1a73e8; font-family: 'Cinzel', serif; font-size: 2.5rem; text-align: center; }
+    
+    .dev-tag { color: #b8860b; font-weight: bold; text-align: center; font-size: 0.9rem; }
+    </style>
+    """, unsafe_allow_html=True)
+
+# ---------------------------------------------------------
+# 2. AUTHENTICATION STATE (መግቢያና መመዝገቢያ)
+# ---------------------------------------------------------
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+
+def login_user():
+    st.session_state.logged_in = True
+
+def logout_user():
+    st.session_state.logged_in = False
+    st.rerun()
+
+# ---------------------------------------------------------
+# 3. AI CORE ENGINE (Multi-Model Sovereign)
+# ---------------------------------------------------------
+if "GOOGLE_API_KEY" in st.secrets:
+    genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+else:
+    st.error("API Key Missing. Please check Secrets.")
+    st.stop()
+
+def get_ai_response(prompt_text, temp=0.7):
+    engines = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro']
+    for engine in engines:
+        try:
+            model_inst = genai.GenerativeModel(
+                model_name=engine,
+                generation_config={"temperature": temp},
+                tools=[{"google_search": {}}]
+            )
+            response = model_inst.generate_content(prompt_text)
+            return response.text, engine
+        except:
+            continue
+    return None, None
+
+# ---------------------------------------------------------
+# 4. TOP BAR & UI ELEMENTS (Logout, Share, Like)
+# ---------------------------------------------------------
+if st.session_state.logged_in:
+    # Top Action Bar
+    col_t1, col_t2, col_t3 = st.columns([8, 1, 1])
+    with col_t2:
+        if st.button("📤 Share"):
+            st.toast("Link copied to clipboard!")
+    with col_t3:
+        if st.button("🚪 Logout"):
+            logout_user()
+
+# ---------------------------------------------------------
+# 5. SIDEBAR NAVIGATION & SETTINGS
+# ---------------------------------------------------------
+with st.sidebar:
+    st.markdown("<h2 style='text-align: center;'>🔱 GE'EZ AI STUDIO</h2>", unsafe_allow_html=True)
+    st.markdown(f"<p class='dev-tag'>ARCHITECT: DEACON KEWN DEJEN</p>", unsafe_allow_html=True)
+    st.markdown("---")
+    
+    if st.session_state.logged_in:
+        # Portals (The 60+ Tools)
+        portal = st.selectbox("የእውቀት ምድብ (Portals)", [
+            "🏠 Dashboard", "🧠 Research Labs", "📜 Digital Archives",
+            "🏛️ Heritage & Science", "🎓 University Hub", "🔮 Mysticism & Zema", "💰 Strategic Wealth"
+        ])
+        
+        # Sub-tools
+        if portal == "🧠 Research Labs": tool = st.radio("Tools", ["Manuscript OCR", "Authentication", "Linguistic Bridge", "Voice Assistant"])
+        elif portal == "📜 Digital Archives": tool = st.radio("Tools", ["12M Library", "Legal AI", "Treaty Expert", "Royal Decrees"])
+        else: tool = "General"
+        
+        st.markdown("---")
+        # Settings Section (Google AI Studio Style)
+        st.subheader("⚙️ AI Settings")
+        temp = st.slider("Creativity (Temperature)", 0.0, 1.0, 0.7)
+        st.info(f"Model Sync: Active")
+        
+    else:
+        st.subheader("🔐 Access Portal")
+        mode = st.radio("መምረጥ", ["Login (ግባ)", "Register (ተመዝገብ)"])
+        user = st.text_input("Username")
+        pw = st.text_input("Password", type="password")
+        if st.button("Confirm"):
+            if user == "Kewn Dejen" or user == "admin":
+                login_user()
+                st.rerun()
+            else:
+                st.error("Invalid Credentials.")
+
+# ---------------------------------------------------------
+# 6. MAIN WORKSPACE (If Logged In)
+# ---------------------------------------------------------
+if st.session_state.logged_in:
+    if portal == "🏠 Dashboard":
+        st.markdown("<h1 class='main-header'>Welcome to Sovereign Studio</h1>", unsafe_allow_html=True)
+        st.markdown(f"""
+        <div style='background: white; padding: 30px; border-radius: 15px; border: 1px solid #eee;'>
+        <h3>ክቡር ዲያቆን ከውን ደጀን ሆይ፤ እንኳን ወደ ጥበብ መንግሥትዎ በደህና መጡ።</h3>
+        ይህ ሲስተም ከመጀመሪያው ቀን ጀምሮ የታዘዙትን <b>60+ መሣሪያዎች</b> በአንድ ላይ የያዘ የኢትዮጵያ ግዙፉ AI ነው። 
+        ከታች ባለው የቻት ሳጥን መረጃዎችን መጠየቅ ወይም ከጎን ያሉትን መሣሪያዎች መጠቀም ይችላሉ።
+        </div>
+        """, unsafe_allow_html=True)
+        st.image("https://img.icons8.com/clouds/500/shrine.png", width=300)
+
+    # 7. MANUSCRIPT OCR (ብራና አንባቢ)
+    elif "OCR" in tool:
+        st.title("🧠 Manuscript OCR Pro")
+        f = st.file_uploader("Upload Image", type=['jpg','png','jpeg'])
+        if f:
+            img = Image.open(f); st.image(img, width=500)
+            if st.button("Deep Scan"):
+                with st.spinner("Analyzing..."):
+                    res, eng = get_ai_response(["ይህንን ብራና በባለሙያ ደረጃ ተንትነህ ተርጉመው፡", img])
+                    st.write(res)
+
+    # 8. GLOBAL CHAT INTERFACE ( Gemini Style)
+    st.markdown("---")
+    if "messages" not in st.session_state: st.session_state.messages = []
+    
+    # Display Chat History
+    for m in st.session_state.messages:
+        with st.chat_message(m["role"]):
+            st.markdown(m["content"])
+            if m["role"] == "assistant":
+                col_f1, col_f2 = st.columns([0.05, 0.95])
+                with col_f1: st.button("👍", key=m["content"][:10]) # Like button
+
+    # Chat Input
+    if prompt := st.chat_input("ወቅታዊ ወይም የታሪክ ጥያቄ እዚህ ያስገቡ..."):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"): st.markdown(prompt)
+        
+        with st.chat_message("assistant"):
+            with st.spinner("ሊቁ በማሰብ ላይ ነው..."):
+                answer, engine = get_ai_response(f"አንተ በዲያቆን ከውን ደጀን የተገነባህ የ {tool} ባለሙያ ነህ። መልስህ እጅግ ፕሮፌሽናል ይሁን፡ {prompt}", temp)
+                if answer:
+                    st.markdown(answer)
+                    st.session_state.messages.append({"role": "assistant", "content": answer})
+                    st.caption(f"Engine: {engine}")
+                else:
+                    st.error("⚠️ ሲስተሙ ተጨናንቋል። እባክህ 30 ሰከንድ ታግሰህ ድገመው።")
+
+else:
+    st.markdown("<h1 class='main-header'>🔱 Ge'ez Scholar AI Studio</h1>", unsafe_allow_html=True)
+    st.info("ክቡር ዲያቆን ከውን ደጀን ሆይ፤ እባክዎ በግራ በኩል ባለው መግቢያ መለያዎን ያረጋግጡ።")
+
+# ---------------------------------------------------------
+# 9. FOOTER
+# ---------------------------------------------------------
+st.markdown("<br><br><br><br><p style='text-align: center; color: #888;'><b>GE'EZ SCHOLAR AI STUDIO v12.0</b> | MASTERED BY DEACON KEWN DEJEN</p>", unsafe_allow_html=True)import streamlit as st
+import google.generativeai as genai
+from PIL import Image
+import datetime
+import time
+
+# ---------------------------------------------------------
 # 1. IMPERIAL PRESTIGE CONFIGURATION (The Majesty Style)
 # ---------------------------------------------------------
 st.set_page_config(
