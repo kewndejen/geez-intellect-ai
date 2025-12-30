@@ -69,6 +69,7 @@ else:
 def initialize_master_ai():
     """የሚሠራውን ሞዴል እና ጎግል ሰርችን ከስህተት ነፃ በሆነ መንገድ የሚያገናኝ ሎጂክ"""
     try:
+        # 1. መጀመሪያ የሚሰሩ ሞዴሎችን ይዘረዝራል
         working_list = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
         
         # ምርጥ ሞዴል መምረጥ
@@ -176,7 +177,7 @@ elif "Bahre Hasab" in tool:
     st.title("📅 Bahre Hasab Logic")
     year = st.number_input("ዓመተ ምሕረት", value=2017)
     if st.button("ቀመሩን አውጣ"):
-        res = model.generate_content(f"ለ {year} ዓመተ ምሕረት የባሕረ ሐሳብ ቀመር አውጣ።")
+        res = model.generate_content(f"ለ {year} ዓመተ ምሕረት የባሕረ ሐሳብ ቀመር (አጽዋማትና በዓላት) አውጣ።")
         st.write(res.text)
 
 # ---------------------------------------------------------
