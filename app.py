@@ -1,5 +1,53 @@
 import streamlit as st
 import google.generativeai as genai
+
+# 1. የገጹ ገጽታ ቅንብር
+st.set_page_config(page_title="Ge'ez Intellect AI", page_icon="📜")
+st.title("📜 Ge'ez Intellect AI")
+st.markdown("##### የግዕዝ ሥነ-ጽሁፍ፣ ቅኔ እና ታሪክ ረዳት")
+
+# 2. API Keyን ከSecrets መውሰድ
+if "GOOGLE_API_KEY" in st.secrets:
+    genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+else:
+    st.error("API Key አልተገኘም! እባክህ በ Settings ውስጥ 'GOOGLE_API_KEY' አክል")
+    st.stop()
+
+# 3. ሞዴሉን ማዘጋጀት (Flash ሞዴል ለነፃ አገልግሎት የተሻለ ነው)
+model = genai.GenerativeModel(
+    model_name='gemini-1.5-flash',
+    system_instruction="አንተ 'Ge'ez Sage' የተባልክ የግዕዝ ቋንቋ እና የቅኔ ሊቅ ነህ። መልስህ ሁልጊዜ ጥልቅ እና አስተማሪ ይሁን።"
+)
+
+# 4. የንግግር ታሪክ (Chat History)
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+# 5. ጥያቄ መቀበያ እና መልስ መስጫ
+if prompt := st.chat_input("የግዕዝ ጥያቄዎን እዚህ ይጻፉ..."):
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    with st.chat_message("assistant"):
+        try:
+            # AI መልስ እንዲሰጥ መጠየቅ
+            response = model.generate_content(prompt)
+            st.markdown(response.text)
+            st.session_state.messages.append({"role": "assistant", "content": response.text})
+        
+        except Exception as e:
+            # ስህተት ሲፈጠር (ለምሳሌ ገደብ ሲያልቅ) የሚታይ መልእክት
+            error_msg = str(e)
+            if "429" in error_msg or "ResourceExhausted" in error_msg:
+                st.warning("⚠️ ይቅርታ፣ በአሁኑ ሰዓት ብዙ ተጠቃሚዎች እያስተናገድኩ ስለሆነ የነፃ አገልግሎት ገደብ ላይ ደርሻለሁ። እባክህ ከ1 ደቂቃ በኋላ በድጋሚ ሞክር።")
+            else:
+                st.error("አዝናለሁ፣ ያልታወቀ ስህተት ተፈጥሯል። እባክህ ገጹን Refresh አድርገህ ሞክር።")import streamlit as st
+import google.generativeai as genai
 import time
 
 # የገጹ ርዕስ
