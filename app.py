@@ -1,10 +1,10 @@
 import streamlit as st
-import google.generativeai as genai
+from google import genai
 import time
-import random
+import datetime
 
 # ---------------------------------------------------------
-# 1. IMPERIAL GLOBAL CONFIGURATION
+# 1. IMPERIAL PAGE CONFIGURATION (The New Gen)
 # ---------------------------------------------------------
 st.set_page_config(
     page_title="Ge'ez Scholar AI Studio | Deacon Kewn Dejen",
@@ -13,7 +13,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Professional World-Class Sovereign UI
+# Professional Sovereign Theme (Deep Navy & High Contrast Gold)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Montserrat:wght@400;700&display=swap');
@@ -24,64 +24,79 @@ st.markdown("""
         font-family: 'Montserrat', sans-serif; 
     }
     
-    h1, h2, h3 { font-family: 'Cinzel Decorative', serif; color: #FFD700 !important; text-align: center; }
-    
-    [data-testid="stSidebar"] { background-color: #000b1a !important; border-right: 3px solid #D4AF37; }
+    h1, h2, h3 { 
+        font-family: 'Cinzel Decorative', serif; 
+        color: #FFD700 !important; 
+        text-align: center;
+        text-shadow: 0px 0px 20px rgba(255, 215, 0, 0.5);
+    }
+
+    [data-testid="stSidebar"] {
+        background-color: #000b1a !important;
+        border-right: 3px solid #D4AF37;
+    }
 
     .sovereign-card {
         background: rgba(255, 255, 255, 0.1);
         backdrop-filter: blur(15px);
         padding: 30px; border-radius: 20px;
         border: 1px solid #D4AF37;
-        box-shadow: 0 10px 50px rgba(0,0,0,0.8);
-        color: #ffffff !important;
+        margin-bottom: 25px;
     }
 
     .stButton>button {
         background: linear-gradient(135deg, #FFD700 0%, #B8860B 100%) !important;
         color: #000 !important; font-weight: 900 !important;
-        border-radius: 12px !important; height: 4em; width: 100%; transition: 0.5s;
+        border-radius: 12px !important; height: 3.8em; width: 100%; transition: 0.5s ease;
         text-transform: uppercase; letter-spacing: 2px;
     }
+    .stButton>button:hover { transform: scale(1.02); box-shadow: 0 0 40px #D4AF37; }
 
-    [data-testid="stChatInput"] { border: 3px solid #D4AF37 !important; background-color: #ffffff !important; border-radius: 20px !important; }
-    [data-testid="stChatInput"] textarea { color: #000000 !important; font-weight: bold !important; font-size: 1.1rem !important; }
+    [data-testid="stChatInput"] { 
+        border: 3px solid #D4AF37 !important; 
+        background-color: #ffffff !important;
+        border-radius: 20px !important; 
+    }
+    [data-testid="stChatInput"] textarea { color: #000000 !important; font-weight: bold; font-size: 1.1rem; }
     </style>
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 2. INDESTRUCTIBLE ENGINE (The Fortress Logic)
+# 2. THE NEW GOOGLE GEN AI CLIENT (v1.0 Ready)
 # ---------------------------------------------------------
 if "GOOGLE_API_KEY" in st.secrets:
-    genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+    api_key = st.secrets["GOOGLE_API_KEY"]
+    try:
+        client = genai.Client(api_key=api_key)
+    except Exception as e:
+        st.error(f"❌ ሲስተሙን ማስነሳት አልተቻለም: {e}")
 else:
-    st.error("⚠️ API Key Not Found! Please check Streamlit Secrets.")
+    st.error("⚠️ API Key አልተገኘም! እባክዎ በ Secrets ውስጥ GOOGLE_API_KEY ያስገቡ።")
     st.stop()
 
 def ask_sovereign_scholar(prompt, tool_context):
-    # ሰፊ ኮታ ያላቸው ሞዴሎች ዝርዝር
-    models_to_try = ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-1.5-pro", "gemini-pro"]
+    """አዲሱን የጎግል SDK በመጠቀም መልስ የሚያመጣ ብልህ ሎጂክ"""
+    # የሚሞከሩ ሞዴሎች ዝርዝር (አዲሱ አጻጻፍ)
+    models = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash"]
     
     sys_instr = f"You are 'Ge'ez Scholar AI', created by Grand Architect Deacon Kewn Dejen. Expert in {tool_context}. Provide scholarly, deep analysis."
 
-    for model_name in models_to_try:
+    for model_id in models:
         try:
-            model = genai.GenerativeModel(model_name=model_name, system_instruction=sys_instr)
-            # የዳግም ሙከራ ዑደት
-            for attempt in range(2):
-                try:
-                    response = model.generate_content(prompt)
-                    if response and response.text:
-                        return response.text, model_name
-                except Exception as e:
-                    if "429" in str(e):
-                        time.sleep(random.randint(2, 5))
-                        continue
-                    break
-        except:
+            response = client.models.generate_content(
+                model=model_id,
+                contents=prompt,
+                config={'system_instruction': sys_instr}
+            )
+            if response and response.text:
+                return response.text, model_id
+        except Exception as e:
+            if "429" in str(e):
+                time.sleep(2)
+                continue
             continue
             
-    return "❌ ጎግል መንገዱን በኃይል ዘግቶታል። ይህ የሚሆነው የ API ቁልፍዎ ስለታገደ ሊሆን ይችላል። እባክዎ አዲስ ቁልፍ ይፍጠሩ።", "None"
+    return "❌ ሊቁ መዛግብቱን ለመክፈት አልቻሉም። እባክዎ ከ30 ሰከንድ በኋላ ገጹን Refresh ያድርጉ።", "None"
 
 # ---------------------------------------------------------
 # 3. SIDEBAR & TOOLS
@@ -111,10 +126,10 @@ if prompt := st.chat_input("ለሊቁ ጥያቄዎን እዚህ ያስገቡ..."
     with st.chat_message("user"): st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        with st.spinner("ሊቁ መዛግብቱን እያመሳከረ ነው..."):
+        with st.spinner("ሊቁ መዛግብቱን በጥልቀት እያመሳከረ ነው..."):
             answer, engine = ask_sovereign_scholar(prompt, pillar)
-            full_res = f"<div>{answer}</div><div style='font-size:0.8rem; color:#FFD700; margin-top:10px;'>Source: {engine} | Fortress v20k</div>"
+            full_res = f"<div>{answer}</div><div style='font-size:0.8rem; color:#FFD700; margin-top:10px;'>Source: {engine} | New-Gen v30k</div>"
             st.markdown(full_res, unsafe_allow_html=True)
             st.session_state.messages.append({"role": "assistant", "content": full_res})
 
-st.markdown("<br><hr><p style='text-align:center; color:#FFD700;'>GE'EZ SCHOLAR AI STUDIO v20,000 | Grand Architect Deacon Kewn Dejen</p>", unsafe_allow_html=True)
+st.markdown("<br><hr><p style='text-align:center; color:#FFD700;'>GE'EZ SCHOLAR AI STUDIO v30,000 | Grand Architect Deacon Kewn Dejen</p>", unsafe_allow_html=True)
