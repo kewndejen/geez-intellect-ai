@@ -1,12 +1,9 @@
 import streamlit as st
 import google.generativeai as genai
-from PyPDF2 import PdfReader
-from docx import Document
 import time
 import random
 import datetime
 from PIL import Image
-import io
 
 # ---------------------------------------------------------
 # 1. IMPERIAL PAGE CONFIGURATION
