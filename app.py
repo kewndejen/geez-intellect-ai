@@ -3,55 +3,47 @@ import google.generativeai as genai
 from PIL import Image
 import datetime
 
-# 1. IMPERIAL PAGE CONFIG
+# 1. ገጹን ማስተካከያ (Imperial Setup)
 st.set_page_config(page_title="Ge'ez Scholar AI | Deacon Kewn Dejen", page_icon="🔱", layout="wide")
 
-# 2. SOVEREIGN BLACK & GOLD CSS
+# 2. የጥቁርና ወርቃማ ዲዛይን (Imperial CSS)
 st.markdown("""
     <style>
     .stApp { background-color: #00050a; color: #ffffff; }
     h1, h2, h3 { color: #d4af37 !important; text-align: center; font-family: 'Cinzel Decorative', serif; }
     [data-testid="stSidebar"] { background: linear-gradient(180deg, #010c17 0%, #1a0000 100%) !important; border-right: 2px solid #d4af37; }
     .stButton>button { background: linear-gradient(45deg, #d4af37 0%, #8b6b00 100%) !important; color: #000 !important; font-weight: bold; width: 100%; border-radius: 10px; }
-    .sovereign-card { background: rgba(255, 255, 255, 0.03); padding: 20px; border-radius: 15px; border-left: 8px solid #d4af37; margin-bottom: 20px; }
+    .stChatInput input { background-color: #001220 !important; color: white !important; border: 1px solid #d4af37 !important; }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. AI CORE LOGIC (With Failover)
+# 3. የ AI ግንኙነት (API Connection)
 if "GOOGLE_API_KEY" in st.secrets:
-    genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-else:
-    st.error("API Key Missing!")
-    st.stop()
-
-def ask_scholar_ai(prompt, tool_name, image=None):
-    # ይህ መመሪያ AIው በሁሉም 60 መሣሪያዎች ላይ ሊቅ እንዲሆን ያደርገዋል
-    sys_instruction = f"""
-    You are 'Ge'ez Scholar AI Studio v70.0', created by Deacon Kewn Dejen.
-    You are an expert in: {tool_name}. 
-    Your mission is to provide scholarly, deep, and historical analysis. 
-    Use the 12 million archive pages and ancient wisdom to answer.
-    Support Ge'ez, Amharic, and English.
-    """
     try:
-        model = genai.GenerativeModel("gemini-1.5-pro", system_instruction=sys_instruction)
-        response = model.generate_content([prompt, image] if image else prompt)
-        return response.text
-    except:
-        try:
-            model = genai.GenerativeModel("gemini-1.5-flash")
-            response = model.generate_content(prompt)
-            return response.text
-        except:
-            return "ሊቁ በአሁኑ ሰዓት በጸሎት ላይ ናቸው። እባክዎ ትንሽ ቆይተው ይሞክሩ።"
+        genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+    except Exception as e:
+        st.error(f"API Configuration Error: {e}")
+else:
+    st.error("⚠️ API Key አልተገኘም! እባክዎ በ Streamlit Secrets ውስጥ GOOGLE_API_KEY ያስገቡ።")
 
-# 4. SIDEBAR - THE 60 PILLARS OF WISDOM
+# 4. መልስ ማምጫ ተግባር (Response Function)
+def get_ai_response(user_text, tool_name):
+    instruction = f"You are an expert in {tool_name}, created by Deacon Kewn Dejen. Provide a deep, scholarly answer in the language the user speaks (Amharic/Ge'ez/English)."
+    try:
+        # gemini-1.5-flash እጅግ ፈጣንና አስተማማኝ ነው
+        model = genai.GenerativeModel(model_name="gemini-1.5-flash", system_instruction=instruction)
+        response = model.generate_content(user_text)
+        return response.text
+    except Exception as e:
+        return f"❌ ስህተት ተከስቷል: {str(e)}"
+
+# 5. የጎንዮሽ ምሰሶዎች (60 Tools Organized in 6 Pillars)
 with st.sidebar:
     st.markdown("<h1>🔱 GE'EZ STUDIO</h1>", unsafe_allow_html=True)
-    st.markdown(f"<div style='text-align:center; color:#d4af37;'>GRAND ARCHITECT: DEJ. KEWN DEJEN</div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='text-align:center; color:#d4af37;'>GRAND ARCHITECT: DEACON KEWN DEJEN</div>", unsafe_allow_html=True)
     st.markdown("---")
     
-    pillar = st.selectbox("Select Wisdom Pillar", [
+    pillar = st.selectbox("የጥበብ ዘርፍ ይምረጡ", [
         "🧠 Advanced AI Labs",
         "📜 Digital Archives & Law",
         "🏛️ Heritage & Ancient Science",
@@ -60,7 +52,6 @@ with st.sidebar:
         "💰 Strategic Wealth & Security"
     ])
 
-    # እዚህ ጋር ሁሉንም 60 መሣሪያዎች በየምድባቸው እናስቀምጣለን
     if pillar == "🧠 Advanced AI Labs":
         tool = st.radio("Labs", ["Manuscript OCR", "Linguistic Bridge", "Script Authentication", "Root Finder", "Voice of Wisdom", "Neural Translation", "Syntax Analyzer", "Ge'ez NLP", "Dialect Study", "Semantic Map"])
     elif pillar == "📜 Digital Archives & Law":
@@ -74,25 +65,30 @@ with st.sidebar:
     else:
         tool = st.radio("Strategic", ["Business Hub", "API Portal", "Security Admin", "Wealth Strategy", "Sovereign Logs", "Global Relations", "Grant Assistant", "Strategic Planning", "Project Manager", "Data Vault"])
 
-# 5. MAIN WORKSPACE
+# 6. ዋናው የሥራ ገጽ (Main Layout)
 st.markdown(f"<h1>{tool}</h1>", unsafe_allow_html=True)
 
-if "messages" not in st.session_state: st.session_state.messages = []
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
 
-# Display Messages
-for m in st.session_state.messages:
-    with st.chat_message(m["role"]): st.markdown(m["content"])
+# መልእክቶችን ማሳያ
+for message in st.session_state.chat_history:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
 
-# Chat Input
-if prompt := st.chat_input(f"Consult the {tool} expert..."):
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"): st.markdown(prompt)
+# ጥያቄ መቀበያ
+if prompt := st.chat_input(f"{tool}ን ይጠይቁ..."):
+    # የተጠቃሚውን ጥያቄ መመዝገብ
+    st.session_state.chat_history.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
 
+    # የ AI መልስ ማምጣት
     with st.chat_message("assistant"):
         with st.spinner("ሊቁ መዛግብትን እያመሳከረ ነው..."):
-            res = ask_scholar_ai(prompt, tool)
-            st.markdown(res)
-            st.session_state.messages.append({"role": "assistant", "content": res})
+            answer = get_ai_response(prompt, tool)
+            st.markdown(answer)
+            st.session_state.chat_history.append({"role": "assistant", "content": answer})
 
-# 6. MASTER FOOTER
-st.markdown("<br><br><p style='text-align:center; color:#d4af37;'>GE'EZ SCHOLAR AI STUDIO v70.0 | DEVELOPED BY GRAND ARCHITECT DEACON KEWN DEJEN</p>", unsafe_allow_html=True)
+# 7. መዝጊያ (Footer)
+st.markdown("<br><hr><p style='text-align:center; color:#d4af37;'>GE'EZ SCHOLAR AI STUDIO v80.0 | DEVELOPED BY GRAND ARCHITECT DEACON KEWN DEJEN</p>", unsafe_allow_html=True)
