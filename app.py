@@ -17,25 +17,39 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# 3. የ AI ግንኙነት (API Connection)
+# 3. የ AI ግንኙነትና ሞዴል መረጣ
 if "GOOGLE_API_KEY" in st.secrets:
     try:
         genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+        # የሚሰሩ ሞዴሎችን ዝርዝር ለማየት
+        available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
     except Exception as e:
-        st.error(f"API Configuration Error: {e}")
+        st.error(f"Configuration Error: {e}")
+        available_models = []
 else:
     st.error("⚠️ API Key አልተገኘም! እባክዎ በ Streamlit Secrets ውስጥ GOOGLE_API_KEY ያስገቡ።")
+    available_models = []
 
-# 4. መልስ ማምጫ ተግባር (Response Function)
+# 4. መልስ ማምጫ ተግባር (አስተማማኝ በሆነ ሞዴል)
 def get_ai_response(user_text, tool_name):
-    instruction = f"You are an expert in {tool_name}, created by Deacon Kewn Dejen. Provide a deep, scholarly answer in the language the user speaks (Amharic/Ge'ez/English)."
+    instruction = f"You are an expert in {tool_name}, created by Deacon Kewn Dejen. Provide a scholarly answer."
+    
+    # መጀመሪያ gemini-proን ለመጠቀም ይሞክራል (በጣም አስተማማኝ ነው)
+    target_model = ""
+    for m in ["models/gemini-pro", "models/gemini-1.5-flash", "models/gemini-1.0-pro"]:
+        if any(target in m for target in available_models) or m in available_models:
+            target_model = m
+            break
+    
+    if not target_model:
+        target_model = "gemini-pro" # እንደ መጨረሻ አማራጭ
+
     try:
-        # gemini-1.5-flash እጅግ ፈጣንና አስተማማኝ ነው
-        model = genai.GenerativeModel(model_name="gemini-1.5-flash", system_instruction=instruction)
+        model = genai.GenerativeModel(model_name=target_model, system_instruction=instruction)
         response = model.generate_content(user_text)
         return response.text
     except Exception as e:
-        return f"❌ ስህተት ተከስቷል: {str(e)}"
+        return f"❌ ስህተት ተከስቷል: {str(e)}\n\n(ማሳሰቢያ: ሞዴል '{target_model}' አልተገኘም ወይም አልሰራም)"
 
 # 5. የጎንዮሽ ምሰሶዎች (60 Tools Organized in 6 Pillars)
 with st.sidebar:
@@ -65,30 +79,25 @@ with st.sidebar:
     else:
         tool = st.radio("Strategic", ["Business Hub", "API Portal", "Security Admin", "Wealth Strategy", "Sovereign Logs", "Global Relations", "Grant Assistant", "Strategic Planning", "Project Manager", "Data Vault"])
 
-# 6. ዋናው የሥራ ገጽ (Main Layout)
+# 6. ዋናው የሥራ ገጽ
 st.markdown(f"<h1>{tool}</h1>", unsafe_allow_html=True)
 
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
-# መልእክቶችን ማሳያ
 for message in st.session_state.chat_history:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# ጥያቄ መቀበያ
 if prompt := st.chat_input(f"{tool}ን ይጠይቁ..."):
-    # የተጠቃሚውን ጥያቄ መመዝገብ
     st.session_state.chat_history.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # የ AI መልስ ማምጣት
     with st.chat_message("assistant"):
         with st.spinner("ሊቁ መዛግብትን እያመሳከረ ነው..."):
             answer = get_ai_response(prompt, tool)
             st.markdown(answer)
             st.session_state.chat_history.append({"role": "assistant", "content": answer})
 
-# 7. መዝጊያ (Footer)
-st.markdown("<br><hr><p style='text-align:center; color:#d4af37;'>GE'EZ SCHOLAR AI STUDIO v80.0 | DEVELOPED BY GRAND ARCHITECT DEACON KEWN DEJEN</p>", unsafe_allow_html=True)
+st.markdown("<br><hr><p style='text-align:center; color:#d4af37;'>GE'EZ SCHOLAR AI STUDIO v85.0 | DEVELOPED BY GRAND ARCHITECT DEACON KEWN DEJEN</p>", unsafe_allow_html=True)
