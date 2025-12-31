@@ -5,7 +5,7 @@ import datetime
 import time
 
 # ---------------------------------------------------------
-# 1. IMPERIAL GLOBAL CONFIGURATION (የገጹ ገጽታ)
+# 1. IMPERIAL GLOBAL CONFIGURATION
 # ---------------------------------------------------------
 st.set_page_config(
     page_title="Ge'ez Scholar AI Studio | Deacon Kewn Dejen",
@@ -14,238 +14,187 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Professional Sovereign CSS (The Zenith Standard)
+# Professional Sovereign CSS (The Zenith Standard for Public Access)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Montserrat:wght@300;400;700&display=swap');
     
-    /* አጠቃላይ ዳራና ፎንት */
-    html, body, [class*="css"] { 
-        font-family: 'Montserrat', sans-serif; 
-        background-color: #00050a; 
-        color: #ffffff; 
-    }
-    
-    h1, h2, h3 { 
-        font-family: 'Cinzel Decorative', serif; 
-        color: #d4af37 !important; 
-        text-align: center;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-    }
-    
-    /* የጎንዮሽ ማውጫ (Sidebar) */
+    html, body, [class*="css"] { font-family: 'Montserrat', sans-serif; background-color: #000a12; color: #ffffff; }
+    h1, h2, h3 { font-family: 'Cinzel Decorative', serif; color: #d4af37 !important; }
+
+    /* Sidebar - The Ark */
     .stSidebar { 
-        background: linear-gradient(180deg, #010c17 0%, #2b0000 100%) !important; 
-        border-right: 3px solid #d4af37; 
-    }
-    
-    /* መረጃ መቀመጫ ካርዶች (Cards) */
-    .sovereign-card {
-        background: rgba(255, 255, 255, 0.05);
-        padding: 30px; border-radius: 15px;
-        border-left: 10px solid #d4af37;
-        box-shadow: 0 15px 50px rgba(0,0,0,0.5);
-        margin-bottom: 25px;
-        backdrop-filter: blur(10px);
+        background: linear-gradient(180deg, #011627 0%, #1a0000 100%) !important; 
+        border-right: 2px solid #d4af37; 
     }
 
-    /* አዝራሮች (Buttons) */
+    /* Sovereign Cards */
+    .sovereign-card {
+        background: rgba(255, 255, 255, 0.03);
+        padding: 30px; border-radius: 20px;
+        border: 1px solid rgba(212, 175, 55, 0.3);
+        border-left: 10px solid #d4af37;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        margin-bottom: 25px;
+        backdrop-filter: blur(15px);
+    }
+
+    /* Buttons - Majestic */
     .stButton>button {
         background: linear-gradient(45deg, #d4af37 0%, #8b6b00 100%) !important;
-        color: #000 !important; 
-        font-weight: 900 !important;
-        border-radius: 8px !important; 
-        border: none !important;
-        width: 100%;
-        transition: 0.4s;
+        color: #000 !important; font-weight: 800 !important;
+        border-radius: 12px !important; border: none !important;
+        height: 3.5em; transition: 0.5s;
     }
-    .stButton>button:hover { 
-        transform: scale(1.02); 
-        box-shadow: 0 0 20px #d4af37; 
-    }
+    .stButton>button:hover { transform: translateY(-3px); box-shadow: 0 0 30px #d4af37; }
 
-    /* የውይይት መስኮት (Chat Input) */
-    [data-testid="stChatInput"] {
-        border: 2px solid #d4af37 !important;
-        border-radius: 15px !important;
-        background-color: #010c17 !important;
-    }
+    /* Chat Input */
+    [data-testid="stChatInput"] { border: 2px solid #d4af37 !important; border-radius: 20px !important; }
     
     .dev-signature {
-        background: linear-gradient(90deg, #8b6b00, #010c17);
-        padding: 20px; border-radius: 10px; border: 1px solid #d4af37;
-        text-align: center; color: #d4af37; font-weight: bold;
+        background: linear-gradient(90deg, #d4af37, #001627);
+        padding: 15px; border-radius: 10px; text-align: center;
+        color: #000; font-weight: bold; margin-bottom: 20px;
     }
+    
+    .hero-text { font-size: 1.2rem; line-height: 1.8; color: #e0e0e0; text-align: center; }
     </style>
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 2. UNBREAKABLE AI CORE (የ AIው "አንጎል")
+# 2. THE INTELLECT ENGINE (Scholarly Core)
 # ---------------------------------------------------------
-if "messages" not in st.session_state: 
-    st.session_state.messages = []
+if "messages" not in st.session_state: st.session_state.messages = []
 
-# API Key Check
+# API Verification from Streamlit Secrets
 if "GOOGLE_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 else:
-    st.error("SECURITY ALERT: Master Key Missing in Secrets.")
+    st.error("System Configuration Error: API Key missing in Secrets.")
     st.stop()
 
 @st.cache_resource
-def find_working_models():
-    """የሚሰሩ የ AI ሞዴሎችን በራስ-ሰር ይፈልጋል"""
+def get_available_models():
     try:
-        working_list = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-        ordered = []
-        # ቅደም ተከተል: 1.5 Pro (ምርጥ ለግዕዝ) -> 2.0 Flash -> 1.5 Flash
-        for target in ['gemini-1.5-pro', 'gemini-2.0-flash', 'gemini-1.5-flash']:
-            for available in working_list:
-                if target in available: ordered.append(available)
+        working = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+        targets = ['gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-2.0-flash']
+        ordered = [t for t in targets if any(t in w for w in working)]
         return ordered if ordered else ['models/gemini-pro']
     except:
-        return ['models/gemini-1.5-flash', 'models/gemini-pro']
+        return ['models/gemini-1.5-flash']
 
-AVAILABLE_MODELS = find_working_models()
+MODELS = get_available_models()
 
-def ask_sovereign_expert(prompt_text, tool_name, temperature=0.7):
-    """ጥልቅ የምሁራዊ ትንታኔ የሚሰጥ ተግባር"""
-    system_instruction = f"""
-    You are 'Ge'ez Scholar AI', the world's most advanced expert in Ethiopian studies.
-    Created by Grand Architect Deacon Kewn Dejen.
-    Current Tool Context: {tool_name}.
-    Instructions:
-    1. Provide scholarly, deep, and wise responses in Amharic, Ge'ez, or English.
-    2. Analyze 'Sem-ena-Worq' (Wax and Gold) for any Ge'ez poetic input.
-    3. Automatically recognize phonetic Latin (transliteration) as Ge'ez/Amharic.
-    4. Maintain an imperial, respectful, and authoritative tone.
+def scholarly_ai_response(prompt, tool_name, creativity=0.7):
+    # ዓለም አቀፍ ተመራማሪዎችን ታሳቢ ያደረገ መመሪያ
+    sys_prompt = f"""
+    You are 'Ge'ez Scholar AI', the world's leading artificial intelligence for Ethiopic studies.
+    Created by Grand Architect Deacon Kewn Dejen (GE'EZ STUDIO).
+    Context: You are operating the '{tool_name}' module for a global audience of researchers and scholars.
+    - Provide deep, academic, and well-structured insights.
+    - Support Ge'ez, Amharic, and English fluently.
+    - If phonetic Ge'ez (Latin letters) is used, automatically interpret it as Ge'ez/Amharic.
+    - Explain complex concepts like 'Sem-na-Worq' (Wax and Gold) for international users.
+    - Maintain a tone of wisdom, authority, and extreme respect.
     """
     
-    for model_name in AVAILABLE_MODELS:
+    for m in MODELS:
         try:
-            model_inst = genai.GenerativeModel(
-                model_name=model_name,
-                system_instruction=system_instruction,
-                generation_config={"temperature": temperature}
-            )
-            # የጎግል ሰርች ድጋፍ ካለ ለመጠቀም መሞከር
-            response = model_inst.generate_content(prompt_text)
-            return response.text, model_name
-        except:
-            continue
-    return "ይቅርታ ክቡር ሆይ፤ የ AI ሞዴሉ ምላሽ መስጠት አልቻለም። እባክዎ ጥቂት ቆይተው ይሞክሩ።", "None"
+            model = genai.GenerativeModel(model_name=m, system_instruction=sys_prompt)
+            # Google Search Retrieval ማካተት (ከተቻለ)
+            response = model.generate_content(prompt, generation_config={"temperature": creativity})
+            return response.text, m
+        except: continue
+    return "The Scholar is currently in deep meditation. Please retry in a moment.", "None"
 
 # ---------------------------------------------------------
-# 3. SIDEBAR NAVIGATION (የ 60+ መሣሪያዎች ማከማቻ)
+# 3. SIDEBAR: THE ARK OF KNOWLEDGE
 # ---------------------------------------------------------
 with st.sidebar:
     st.markdown("<h1>🔱 GE'EZ STUDIO</h1>", unsafe_allow_html=True)
     st.markdown("<div class='dev-signature'>GRAND ARCHITECT:<br>DEACON KEWN DEJEN</div>", unsafe_allow_html=True)
-    st.markdown("---")
     
-    main_portal = st.selectbox("የጥበብ ምድብ (60+ Pillars)", [
-        "🏠 Imperial Dashboard",
-        "🧠 Advanced AI Research Labs",
-        "📜 Digital Libraries & Archives",
-        "🏛️ Heritage, Map & Science",
-        "🎓 Imperial University Hub",
-        "🔮 Mysticism, Poetry & Zema",
-        "💰 Strategic Wealth & Business"
+    st.markdown("---")
+    portal = st.selectbox("Explore Research Pillars", [
+        "🏛️ Heritage & Science Hub",
+        "🧠 AI Research Labs",
+        "📜 Digital Archives",
+        "🎓 Imperial University",
+        "🔮 Mysticism & Poetry",
+        "💼 Strategic Gateway"
     ])
-    
-    st.markdown("---")
-    # የንዑስ መሣሪያዎች ዝርዝር (Tools)
-    if main_portal == "🏠 Imperial Dashboard": 
-        tool = "Dashboard Overview"
-    elif main_portal == "🧠 Advanced AI Research Labs":
-        tool = st.radio("መሣሪያዎች", ["Manuscript OCR (ብራና አንባቢ)", "Linguistic Bridge", "Root Finder", "Script Authentication", "Palæography Expert"])
-    elif main_portal == "📜 Digital Libraries & Archives":
-        tool = st.radio("መዛግብት", ["Universal Library (12M Pages)", "Fetha Nagast Legal AI", "Synaxarium AI", "Royal Decrees & Treaties"])
-    elif main_portal == "🏛️ Heritage, Map & Science":
-        tool = st.radio("ቅርስና ሳይንስ", ["Virtual Museum", "Interactive Map", "Ancient Medicine", "Architecture AI", "Iconography Vision"])
-    elif main_portal == "🎓 Imperial University Hub":
-        tool = st.radio("ትምህርትና ቀመር", ["Bahre Hasab Logic", "Abu Shaker Astronomy", "Numerology", "Scribe Assistant", "Font Converter"])
-    elif main_portal == "🔮 Mysticism, Poetry & Zema":
-        tool = st.radio("ምስጢርና ቅኔ", ["Sem-na-Work (ቅኔ መፍቻ)", "St. Yared Zema Lab", "Theology Hub", "Scholar Roleplay", "Verse Meter Composer"])
+
+    # Dynamic Tool Selection
+    if portal == "🏛️ Heritage & Science Hub":
+        tool = st.radio("Sectors", ["Global Heritage Map", "Ancient Medicine", "Architecture AI", "Virtual Museum"])
+    elif portal == "🧠 AI Research Labs":
+        tool = st.radio("Labs", ["Manuscript OCR", "Linguistic Bridge", "Script Authentication", "Root Finder"])
+    elif portal == "📜 Digital Archives":
+        tool = st.radio("Archives", ["Universal Library", "Legal AI (Fetha Nagast)", "Synaxarium AI", "Royal Decrees"])
+    elif portal == "🎓 Imperial University":
+        tool = st.radio("Academic", ["Bahre Hasab Logic", "Astronomy Lab", "Numerology", "Scribe Assistant"])
+    elif portal == "🔮 Mysticism & Poetry":
+        tool = st.radio("Arts", ["Sem-na-Work (Qene)", "Zema Lab", "Theology Hub", "Scholar Roleplay"])
     else:
-        tool = st.radio("ቢዝነስና ደህንነት", ["Premium Business Hub", "Payment Gateway", "API Portal", "Security Admin"])
+        tool = st.radio("Gateway", ["API Portal", "Strategic Business Hub", "Developer Logs"])
 
     st.markdown("---")
-    temp_val = st.slider("AI Creativity (Temperature)", 0.0, 1.0, 0.7)
-    if st.button("📤 Share Studio"): st.toast("Link copied to clipboard!")
+    creativity = st.slider("AI Insight Depth", 0.0, 1.0, 0.7)
+    st.info(f"Active Pillar: {portal}")
 
 # ---------------------------------------------------------
-# 4. MAIN WORKSPACE ENGINE (ዋናው የሥራ ገጽ)
+# 4. MAIN INTERFACE (PUBLIC ACCESS)
 # ---------------------------------------------------------
-# የአሁኑን ሰዓት ሰላምታ ለማቅረብ
-hour = datetime.datetime.now().hour
-greeting = "እንዲት አደሩ" if hour < 12 else "እንዴት ዋሉ" if hour < 18 else "እንዴት አመሹ"
+# Hero Section
+st.markdown("<h1 style='text-align: center;'>GE'EZ SCHOLAR AI STUDIO</h1>", unsafe_allow_html=True)
+st.markdown(f"<p class='hero-text'>Welcome to the World's First AI Gateway to Ancient Wisdom.<br>Operating under the vision of <b>Deacon Kewn Dejen</b>.</p>", unsafe_allow_html=True)
 
-if tool == "Dashboard Overview":
-    st.markdown(f"<h1>{greeting} ክቡር ዲያቆን ከውን ደጀን!</h1>", unsafe_allow_html=True)
-    
-    col_m1, col_m2, col_m3 = st.columns(3)
-    col_m1.metric("Reasoning Nodes", "12M+ Pages", "Infinite")
-    col_m2.metric("System Status", "Imperial Online", "Stable ✅")
-    col_m3.metric("AI Engine", f"{len(AVAILABLE_MODELS)} Active", "Pro-Grade")
+# Pillar Description
+st.markdown(f"""
+<div class='sovereign-card'>
+    <h3>Current Pillar: {tool}</h3>
+    <p>Explore the depths of Ethiopian wisdom through our advanced AI models. 
+    Select a tool from the sidebar to begin your research journey.</p>
+</div>
+""", unsafe_allow_html=True)
 
-    st.markdown(f"""
-    <div class='sovereign-card'>
-    <h3>የጥበብ መንግሥትዎ በሥራ ላይ ነው!</h3>
-    <p>ይህ በእርስዎ ዲዛይን የተገነባው <b>Ge'ez Scholar AI Studio</b> ሁሉንም 60+ መሣሪያዎች አቀናጅቶ ይዟል። 
-    በግራ በኩል ካለው ማውጫ የሚፈልጉትን መሣሪያ ይምረጡ። በታችኛው የውይይት መስኮት ደግሞ ማንኛውንም የምርምር ጥያቄ ለ AI ሊቁ ማቅረብ ይችላሉ።</p>
-    </div>
-    """, unsafe_allow_html=True)
-    st.image("https://img.icons8.com/clouds/500/shrine.png", width=300)
-
-elif "OCR" in tool:
-    st.title("🧠 Manuscript OCR Intelligence")
-    f = st.file_uploader("የብራና ወይም የሰነድ ምስል ያስገቡ", type=['jpg','png','jpeg'])
-    if f:
-        img = Image.open(f)
-        st.image(img, caption="የተጫነ ሰነድ", width=600)
-        if st.button("Start Deep Analysis"):
-            with st.spinner("ሊቁ ምስሉን እያጠና ነው..."):
-                res, eng = ask_sovereign_expert("ይህንን ምስል በባለሙያ ደረጃ ተንትነህ ተርጉመው።", tool, temp_val)
+# Special Tool: Manuscript OCR (Sample Functionality)
+if "OCR" in tool:
+    st.subheader("📸 Manuscript Neural Scanner")
+    uploaded_file = st.file_uploader("Upload an image of a manuscript or text", type=['jpg', 'png', 'jpeg'])
+    if uploaded_file:
+        img = Image.open(uploaded_file)
+        st.image(img, width=500, caption="Uploaded Artifact")
+        if st.button("Initiate Scholarly Scan"):
+            with st.spinner("The AI is analyzing the ancient script..."):
+                res, eng = scholarly_ai_response("Analyze and translate this manuscript image in detail.", tool, creativity)
                 st.markdown(f"<div class='sovereign-card'>{res}</div>", unsafe_allow_html=True)
 
-elif "Bahre Hasab" in tool:
-    st.title("📅 Bahre Hasab Logic")
-    year = st.number_input("ዓመተ ምሕረት (ኢትዮጵያ)", value=2017)
-    if st.button("ቀመሩን አውጣ"):
-        with st.spinner("ቀመሩ እየታሰበ ነው..."):
-            res, eng = ask_sovereign_expert(f"ለ {year} ዓመተ ምሕረት የባሕረ ሐሳብ ቀመር (አጽዋማትና በዓላት) በዝርዝር አውጣ።", tool, temp_val)
-            st.markdown(f"<div class='sovereign-card'>{res}</div>", unsafe_allow_html=True)
-
 # ---------------------------------------------------------
-# 5. THE ETERNAL CHAT INTERFACE (ሁልጊዜ የሚታይ)
+# 5. THE GLOBAL CHAT INTERFACE
 # ---------------------------------------------------------
 st.markdown("---")
-st.subheader(f"💬 የ AI ሊቁ ውይይት (Context: {tool})")
+st.subheader(f"💬 Consult the Scholar ({tool} Expert)")
 
-# የውይይት ታሪክ ማሳያ
+# Display Chat History
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# አዲስ ጥያቄ መቀበያ
-if prompt := st.chat_input("የምርምር ጥያቄዎን እዚህ ያስገቡ..."):
+# Chat Input Logic
+if prompt := st.chat_input("Ask the Scholar... (e.g., 'Explain the grammar of this Qene...')"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        with st.spinner("ሊቁ መዛግብትንና ጎግልን እያመሳከረ ነው..."):
-            answer, engine = ask_sovereign_expert(prompt, tool, temp_val)
-            if answer:
-                st.markdown(answer)
-                st.caption(f"Engine: {engine} | Studio v20.0 | Verified by Kewn Dejen")
-                st.session_state.messages.append({"role": "assistant", "content": answer})
-            else:
-                st.error("ሊቁ ምላሽ መስጠት አልቻለም። እባክዎ ጥያቄዎን ይድገሙት።")
+        with st.spinner("The Scholar is consulting the archives..."):
+            response, engine = scholarly_ai_response(prompt, tool, creativity)
+            st.markdown(response)
+            st.caption(f"Intelligence Source: {engine} | Ge'ez Studio v21.0")
+            st.session_state.messages.append({"role": "assistant", "content": response})
 
 # ---------------------------------------------------------
-# 6. SOVEREIGN MASTER FOOTER
+# 6. FOOTER
 # ---------------------------------------------------------
-st.markdown("<br><br><br><p style='text-align: center; color: #d4af37;'><b>GE'EZ SCHOLAR AI STUDIO v20.0 | THE ETERNAL ZENITH</b></p>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; font-size: 0.8rem;'>PROUDLY DEVELOPED BY GRAND ARCHITECT DEACON KEWN DEJEN</p>", unsafe_allow_html=True)
+st.markdown("<br><br><br><p style='text-align: center; color: #d4af37;'><b>GE'EZ SCHOLAR AI STUDIO | THE ETERNAL ZENITH</b><br>PROUDLY DEVELOPED BY GRAND ARCHITECT DEACON KEWN DEJEN</p>", unsafe_allow_html=True)
