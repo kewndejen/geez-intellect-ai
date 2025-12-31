@@ -1,94 +1,168 @@
 import streamlit as st
 import google.generativeai as genai
+from PIL import Image
 import time
 import random
+import datetime
 
 # ---------------------------------------------------------
-# 1. IMPERIAL PAGE CONFIGURATION (Emerald & Gold Resurrection)
+# 1. IMPERIAL PAGE CONFIGURATION
 # ---------------------------------------------------------
-st.set_page_config(page_title="Ge'ez Scholar AI | Deacon Kewn Dejen", page_icon="🔱", layout="wide")
+st.set_page_config(
+    page_title="Ge'ez Scholar AI Studio | Deacon Kewn Dejen",
+    page_icon="🔱",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
+# Majestic Emerald Green & Royal Gold Theme (Extreme Readability)
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Montserrat:wght@400;700&display=swap');
-    .stApp { background: radial-gradient(circle at center, #004d26 0%, #001a0d 100%); color: #ffffff; }
-    h1, h2, h3 { font-family: 'Cinzel Decorative', serif; color: #FFD700 !important; text-align: center; text-shadow: 2px 2px 10px #000; }
-    [data-testid="stSidebar"] { background-color: #001a0d !important; border-right: 4px solid #FFD700; }
-    .sovereign-card { background: rgba(255, 255, 255, 0.1); padding: 25px; border-radius: 15px; border: 1px solid #FFD700; margin-bottom: 20px; }
-    .stButton>button { background: linear-gradient(45deg, #FFD700 0%, #B8860B 100%) !important; color: #000; font-weight: 900; border-radius: 10px; height: 3.5em; width: 100%; text-transform: uppercase; border: 2px solid #fff; }
-    [data-testid="stChatInput"] { border: 3px solid #FFD700 !important; background-color: #ffffff !important; border-radius: 15px !important; }
-    [data-testid="stChatInput"] textarea { color: #000000 !important; font-weight: bold; }
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Montserrat:wght@400;700&family=Abyssinica+SIL&display=swap');
+    
+    .stApp { 
+        background: radial-gradient(circle at center, #004d26 0%, #001a0d 100%); 
+        color: #ffffff; 
+        font-family: 'Montserrat', sans-serif; 
+    }
+    
+    h1, h2, h3 { 
+        font-family: 'Cinzel Decorative', serif; 
+        color: #FFD700 !important; 
+        text-align: center;
+        text-shadow: 2px 2px 10px rgba(0,0,0,0.8);
+    }
+
+    [data-testid="stSidebar"] {
+        background-color: #001a0d !important;
+        border-right: 4px solid #FFD700;
+    }
+    
+    .sovereign-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(15px);
+        padding: 25px; border-radius: 15px;
+        border: 1px solid #FFD700;
+        margin-bottom: 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+    }
+
+    .stButton>button {
+        background: linear-gradient(45deg, #FFD700 0%, #B8860B 100%) !important;
+        color: #000 !important; font-weight: 900 !important;
+        border-radius: 10px !important; height: 3.8em; width: 100%; transition: 0.5s ease;
+        text-transform: uppercase; border: 2px solid #fff !important;
+    }
+    .stButton>button:hover { transform: scale(1.02); box-shadow: 0 0 35px #FFD700; }
+
+    [data-testid="stChatInput"] { 
+        border: 3px solid #FFD700 !important; 
+        background-color: #ffffff !important; 
+        border-radius: 15px !important; 
+    }
+    [data-testid="stChatInput"] textarea { color: #000000 !important; font-weight: bold !important; font-size: 1.1rem !important; }
+    
     .wait-msg { color: #FFD700; font-style: italic; font-size: 0.9rem; text-align: center; }
+    .citation { font-size: 0.85rem; color: #FFD700; border-top: 1px solid #ffffff; margin-top: 15px; padding-top: 10px; font-family: monospace; }
     </style>
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 2. THE RESILIENT ENGINE (Gemini 2.0 Flash Powered)
+# 2. SMART AI ENGINE (Dynamic Discovery & Retry Logic)
 # ---------------------------------------------------------
 if "GOOGLE_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+    
+    @st.cache_resource
+    def get_best_engine():
+        try:
+            available = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+            # Priority: 2.0 Flash -> 1.5 Flash -> 1.5 Pro
+            priority = ["gemini-2.0-flash-exp", "gemini-1.5-flash", "gemini-1.5-pro"]
+            for target in priority:
+                for m in available:
+                    if target in m: return m
+            return available[0]
+        except:
+            return "models/gemini-1.5-flash"
+    
+    SELECTED_MODEL = get_best_engine()
 else:
-    st.error("API Key missing!")
+    st.error("API Key missing! Please check Secrets.")
     st.stop()
 
 def ask_geez_scholar(prompt, tool_context):
-    # አዲሱና ሰፊው Gemini 2.0 Flash ሞዴል
-    model_name = 'gemini-2.0-flash-exp' 
-    sys_instr = f"You are 'Ge'ez Scholar AI Master', created by Grand Architect Deacon Kewn Dejen. Expert in {tool_context}. Provide deep scholarly analysis."
+    sys_instr = f"You are 'Ge'ez Scholar AI Master', an expert in {tool_context}, created by Grand Architect Deacon Kewn Dejen. Provide deep scholarly analysis."
     
     status_placeholder = st.empty()
     
-    # ተስፋ የማይቆርጥ የሙከራ ዑደት (Smart Retry)
-    for attempt in range(1, 6):
+    # ተስፋ የማይቆርጥ ዑደት (Retry Loop for 429 Errors)
+    for attempt in range(1, 4):
         try:
-            model = genai.GenerativeModel(model_name=model_name, system_instruction=sys_instr)
+            model = genai.GenerativeModel(model_name=SELECTED_MODEL, system_instruction=sys_instr)
             response = model.generate_content(prompt)
             if response and response.text:
                 status_placeholder.empty()
-                return response.text, model_name
+                return response.text, SELECTED_MODEL
         except Exception as e:
             if "429" in str(e):
-                wait = (attempt * 3) + random.random()
-                status_placeholder.markdown(f"<div class='wait-msg'>⏳ ሊቁ በጥልቅ ማሰላሰል ላይ ናቸው... (ሙከራ {attempt}/5)</div>", unsafe_allow_html=True)
+                wait = (attempt * 5) + random.random()
+                status_placeholder.markdown(f"<div class='wait-msg'>⏳ ሊቁ በጥልቅ ምርምር ላይ ናቸው... (ሙከራ {attempt}/3)</div>", unsafe_allow_html=True)
                 time.sleep(wait)
                 continue
-            # ሞዴሉ ካልተገኘ ወደ 1.5 Flash ይዞራል
-            model_name = 'gemini-1.5-flash'
-            continue
+            break
             
     status_placeholder.empty()
-    return "❌ ሊቁ በአሁኑ ሰዓት መዛግብቱን ለመክፈት አልቻሉም። እባክዎ ከ1 ደቂቃ በኋላ ገጹን Refresh ያድርጉ።", "None"
+    return "❌ ሊቁ በአሁኑ ሰዓት መዛግብቱን ለመክፈት አልቻሉም (ኮታ አልቋል)። እባክዎ ከ1 ደቂቃ በኋላ ገጹን Refresh አድርገው ይሞክሩ።", "None"
 
 # ---------------------------------------------------------
-# 3. SIDEBAR: THE 60 PILLARS
+# 3. SIDEBAR: THE ARK OF 60 PILLARS (The Complete Library)
 # ---------------------------------------------------------
 with st.sidebar:
     st.markdown("<h1>🔱 GE'EZ STUDIO</h1>", unsafe_allow_html=True)
-    st.markdown(f"<div style='background:#FFD700; padding:10px; border-radius:10px; text-align:center; color:#000; font-weight:bold;'>GRAND ARCHITECT: DEJ. KEWN DEJEN</div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='background:#FFD700; padding:15px; border-radius:12px; text-align:center; color:#000; font-weight:bold;'>GRAND ARCHITECT: DEJ. KEWN DEJEN</div>", unsafe_allow_html=True)
     st.markdown("---")
-    pillar = st.selectbox("Select Wisdom Pillar", ["Advanced AI Labs", "Archives & Law", "Heritage & Science", "University Hub", "Mysticism & Qene"])
+    
+    pillar = st.selectbox("የጥበብ ምሰሶ (Pillars)", [
+        "🧠 Advanced AI Labs", "📜 Digital Archives", "🏛️ Heritage & Science",
+        "🎓 Imperial University", "🔮 Mysticism & Qene", "💰 Strategic Wealth"
+    ])
+
+    if pillar == "🧠 Advanced AI Labs":
+        tool = st.radio("Labs", ["Manuscript OCR", "Linguistic Bridge", "Script Authentication", "Root Finder", "Voice of Wisdom", "Neural Translation", "Syntax Analyzer", "Ge'ez NLP", "Dialect Study", "Semantic Map"])
+    elif pillar == "📜 Digital Archives":
+        tool = st.radio("Archives", ["Universal Library (12M+)", "Fetha Nagast AI", "Synaxarium Analysis", "Royal Decrees", "Treaty Expert", "Kibre Nagast Hub", "Ecclesiastical Law", "Genealogy Map", "Preservation Lab", "Hagiography Lab"])
+    elif pillar == "🏛️ Heritage & Science":
+        tool = st.radio("Sectors", ["Ancient Medicine", "Archeology Hub", "Heritage Map", "Iconography Vision", "Architecture AI", "Geology of Axum", "Botany Hub", "Zoology Hub", "Ink Chemistry", "Virtual Museum"])
+    elif pillar == "🎓 Imperial University":
+        tool = st.radio("Academic", ["Bahre Hasab Pro", "Abu Shaker Astronomy", "Numerology Lab", "Scribe Assistant", "Font Converter", "Ethiopic Math", "Philosophy Hub", "History Chronology", "University Portal", "Scholarly Citation"])
+    elif pillar == "🔮 Mysticism & Qene":
+        tool = st.radio("Mysticism", ["Sem-na-Worq (Qene)", "St. Yared Zema Lab", "Theology Hub", "Scholar Roleplay", "Proverbs AI", "Esoteric Wisdom", "Liturgical Guide", "Monastic Study", "Apostolic Tradition", "Hymnology Lab"])
+    else:
+        tool = st.radio("Strategic", ["Business Hub", "API Portal", "Security Admin", "Wealth Strategy", "Sovereign Logs", "Global Relations", "Grant Assistant", "Strategic Planning", "Project Manager", "Data Vault"])
+
     st.markdown("---")
-    if st.button("🔄 Reboot Studio"):
+    if st.button("🔄 REBOOT SYSTEM"):
         st.cache_resource.clear()
         st.rerun()
 
 # ---------------------------------------------------------
 # 4. MAIN WORKSPACE
 # ---------------------------------------------------------
-st.markdown("<h1>GE'EZ SCHOLAR AI STUDIO</h1>", unsafe_allow_html=True)
+st.markdown(f"<h1>{tool}</h1>", unsafe_allow_html=True)
 
 if "messages" not in st.session_state: st.session_state.messages = []
 for m in st.session_state.messages:
     with st.chat_message(m["role"]): st.markdown(m["content"], unsafe_allow_html=True)
 
-if prompt := st.chat_input("ለሊቁ ጥያቄዎን እዚህ ያስገቡ..."):
+if prompt := st.chat_input(f"Consult the {tool} expert..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"): st.markdown(f"<b>{prompt}</b>", unsafe_allow_html=True)
 
     with st.chat_message("assistant"):
-        with st.spinner("ሊቁ መዛግብቱን እያመሳከረ ነው..."):
-            answer, engine = ask_geez_scholar(prompt, pillar)
-            full_res = f"<div>{answer}</div><div style='font-size:0.8rem; color:#FFD700; margin-top:20px; border-top:1px solid #ffffff;'>Source: {engine} | Master Sovereign v2.0</div>"
+        with st.spinner("ሊቁ መዛግብቱን በጥልቀት እያመሳከረ ነው..."):
+            answer, engine = ask_geez_scholar(prompt, tool)
+            full_res = f"<div>{answer}</div><div class='citation'>Source: {engine} | Masterpiece Sovereign Edition</div>"
             st.markdown(full_res, unsafe_allow_html=True)
             st.session_state.messages.append({"role": "assistant", "content": full_res})
 
