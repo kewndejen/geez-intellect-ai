@@ -4,7 +4,7 @@ from PIL import Image
 import datetime
 
 # ---------------------------------------------------------
-# 1. IMPERIAL PAGE SETUP
+# 1. IMPERIAL PAGE CONFIGURATION
 # ---------------------------------------------------------
 st.set_page_config(
     page_title="Ge'ez Scholar AI Studio | Deacon Kewn Dejen",
@@ -13,7 +13,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Professional High-Contrast Imperial Theme (Royal Navy, Gold & White)
+# Professional High-Contrast Imperial Theme
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Montserrat:wght@400;700&family=Abyssinica+SIL&display=swap');
@@ -38,7 +38,6 @@ st.markdown("""
         height: 3.5em; width: 100%; transition: 0.3s ease;
     }
 
-    /* Input text box fix: Visible black text on white background */
     [data-testid="stChatInput"] { border: 2px solid #D4AF37 !important; background-color: #ffffff !important; border-radius: 15px !important; }
     [data-testid="stChatInput"] textarea { color: #000000 !important; font-weight: bold !important; font-size: 1.1rem !important; }
     
@@ -47,34 +46,37 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 2. THE ULTIMATE AUTO-DETECT ENGINE (The 404 Killer)
+# 2. STABLE ENGINE SELECTION (The 429 Killer Logic)
 # ---------------------------------------------------------
 if "GOOGLE_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-    
-    @st.cache_resource
-    def discover_working_model():
-        try:
-            # በእርስዎ ቁልፍ የሚሰሩትን ሞዴሎች ዝርዝር ከጎግል በቀጥታ መጠየቅ
-            available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-            
-            # ቅደም ተከተል: Flash (አስተማማኝ) -> Pro (ጥልቅ) -> ማንኛውም የሚሰራ
-            priority_list = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"]
-            for target in priority_list:
-                for actual in available_models:
-                    if target in actual:
-                        return actual
-            return available_models[0] # ምንም ካልተገኘ ዝርዝሩ ውስጥ ያለውን የመጀመሪያውን መጠቀም
-        except Exception:
-            return "models/gemini-pro" # የመጨረሻ አማራጭ
-
-    SELECTED_MODEL = discover_working_model()
 else:
-    st.error("API Key አልተገኘም! እባክዎ በ Secrets ውስጥ GOOGLE_API_KEY ያስገቡ።")
+    st.error("API Key missing! Please add GOOGLE_API_KEY to Streamlit Secrets.")
     st.stop()
 
+@st.cache_resource
+def get_safe_model():
+    try:
+        # የሚሰሩ ሞዴሎችን ዝርዝር ማምጣት
+        all_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+        
+        # ቃል ኪዳን፡- ስህተት የሚፈጥረውን gemini-2.5-pro በጭራሽ እንዳይጠቀም መከልከል
+        # እጅግ አስተማማኝ የሆኑትን በቅደም ተከተል ማስቀመጥ
+        safe_priority = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"]
+        
+        for target in safe_priority:
+            for actual in all_models:
+                if target in actual and "2.5" not in actual: # 2.5-proን በኃይል ያግዳል
+                    return actual
+        return "models/gemini-1.5-flash"
+    except:
+        return "models/gemini-1.5-flash"
+
+SELECTED_MODEL = get_safe_model()
+
 def ask_geez_scholar(prompt, tool_context, image=None):
-    sys_instruction = f"You are 'Ge'ez Scholar AI', an expert in {tool_context}, created by Grand Architect Deacon Kewn Dejen. Respond with deep scholarly wisdom."
+    # 429 ስህተት እንዳይመጣ ጥልቅ መመሪያ
+    sys_instruction = f"You are 'Ge'ez Scholar AI', an expert in {tool_context}, created by Deacon Kewn Dejen. Respond with deep scholarly wisdom. Support Ge'ez/Amharic."
     try:
         model = genai.GenerativeModel(model_name=SELECTED_MODEL, system_instruction=sys_instruction)
         if image:
@@ -83,10 +85,16 @@ def ask_geez_scholar(prompt, tool_context, image=None):
             response = model.generate_content(prompt)
         return response.text
     except Exception as e:
-        return f"❌ የቴክኒክ ስህተት፦ {str(e)}"
+        # 429 ስህተት ከመጣ ወደ ቀጣዩ አስተማማኝ ሞዴል ይዞራል
+        try:
+            fallback = genai.GenerativeModel(model_name="models/gemini-1.5-pro", system_instruction=sys_instruction)
+            res = fallback.generate_content(prompt)
+            return res.text
+        except:
+            return f"❌ ሊቁ መዛግብቱን ለመክፈት አልቻሉም (ኮታ አልቋል)። እባክዎ ከ30 ሰከንድ በኋላ ይሞክሩ።"
 
 # ---------------------------------------------------------
-# 3. SIDEBAR: THE ARK OF 60 PILLARS (The Complete Ark)
+# 3. SIDEBAR: THE ARK OF 60 PILLARS
 # ---------------------------------------------------------
 with st.sidebar:
     st.markdown("<h1>🔱 GE'EZ STUDIO</h1>", unsafe_allow_html=True)
@@ -94,22 +102,22 @@ with st.sidebar:
     st.markdown("---")
     
     pillar = st.selectbox("የጥበብ ምሰሶ", [
-        "🧠 Advanced AI Labs", "📜 Archives & Law", "🏛️ Heritage & Science",
-        "🎓 University Hub", "🔮 Mysticism & Qene", "💰 Strategic Wealth"
+        "🧠 Advanced AI Labs", "📜 Digital Archives & Law", "🏛️ Heritage & Science Hub",
+        "🎓 Imperial University Hub", "🔮 Mysticism & Qene Lab", "💰 Strategic Wealth & Security"
     ])
 
     if pillar == "🧠 Advanced AI Labs":
         tool = st.radio("Labs", ["Manuscript OCR", "Linguistic Bridge", "Script Authentication", "Root Finder", "Voice of Wisdom", "Ge'ez NLP"])
-    elif pillar == "📜 Archives & Law":
-        tool = st.radio("Archives", ["Universal Library", "Fetha Nagast AI", "Synaxarium Analysis", "Royal Decrees"])
-    elif pillar == "🏛️ Heritage & Science":
+    elif pillar == "📜 Digital Archives & Law":
+        tool = st.radio("Archives", ["Universal Library", "Fetha Nagast (Legal AI)", "Synaxarium Analysis", "Royal Decrees"])
+    elif pillar == "🏛️ Heritage & Science Hub":
         tool = st.radio("Sectors", ["Ancient Medicine", "Archeology Hub", "Heritage Map", "Iconography Vision"])
-    elif pillar == "🎓 University Hub":
+    elif pillar == "🎓 Imperial University Hub":
         tool = st.radio("Academic", ["Bahre Hasab Pro", "Abu Shaker Astronomy", "Numerology Lab", "Scribe Assistant"])
-    elif pillar == "🔮 Mysticism & Qene":
-        tool = st.radio("Mysticism", ["Sem-na-Worq (Qene)", "St. Yared Zema Lab", "Theology Hub", "Scholar Roleplay"])
+    elif pillar == "🔮 Mysticism & Qene Lab":
+        tool = st.radio("Mysticism", ["Sem-na-Worq (Qene)", "St. Yared Zema", "Theology Hub", "Scholar Roleplay"])
     else:
-        tool = st.radio("Strategic", ["Premium Business Hub", "API Portal", "Security Admin", "Wealth Strategy"])
+        tool = st.radio("Strategic", ["Business Hub", "API Portal", "Security Admin", "Wealth Strategy"])
 
     st.markdown("---")
     st.caption(f"Active Engine: {SELECTED_MODEL}")
@@ -124,7 +132,7 @@ if "messages" not in st.session_state: st.session_state.messages = []
 for m in st.session_state.messages:
     with st.chat_message(m["role"]): st.markdown(m["content"], unsafe_allow_html=True)
 
-if prompt := st.chat_input(f"Consult the {tool} expert..."):
+if prompt := st.chat_input("ለሊቁ ጥያቄዎን እዚህ ያስገቡ..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"): st.markdown(f"<b>{prompt}</b>", unsafe_allow_html=True)
 
@@ -133,4 +141,4 @@ if prompt := st.chat_input(f"Consult the {tool} expert..."):
         st.markdown(answer)
         st.session_state.messages.append({"role": "assistant", "content": answer})
 
-st.markdown("<br><hr><p style='text-align:center; color:#FFD700;'>GE'EZ SCHOLAR AI STUDIO v3000.0 | Grand Architect Deacon Kewn Dejen</p>", unsafe_allow_html=True)
+st.markdown("<br><hr><p style='text-align:center; color:#FFD700;'>GE'EZ SCHOLAR AI STUDIO v4000.0 | Grand Architect Deacon Kewn Dejen</p>", unsafe_allow_html=True)
