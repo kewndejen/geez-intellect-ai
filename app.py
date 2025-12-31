@@ -8,7 +8,6 @@ import datetime
 from PIL import Image
 import io
 
-
 # ---------------------------------------------------------
 # 1. IMPERIAL PAGE CONFIGURATION
 # ---------------------------------------------------------
