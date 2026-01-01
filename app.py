@@ -17,7 +17,6 @@ st.set_page_config(
     layout="wide"
 )
 
-# Sovereign UI (Emerald & Gold)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Montserrat:wght@400;700&display=swap');
@@ -33,52 +32,52 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 2. SESSION STATE (Auth, History, Storage)
+# 2. SESSION STATE
 # ---------------------------------------------------------
-if 'users' not in st.session_state: st.session_state.users = {"deaconkewn": "AB12@#cdamdegeez"}
+if 'users' not in st.session_state: st.session_state.users = {"admin": "kewn123"}
 if 'logged_in' not in st.session_state: st.session_state.logged_in = False
 if 'username' not in st.session_state: st.session_state.username = ""
-if 'history' not in st.session_state: st.session_state.history = {} # User history
+if 'history' not in st.session_state: st.session_state.history = {}
 
 # ---------------------------------------------------------
-# 3. AI SOVEREIGN ENGINE (Auto-Fix for 404 Error)
+# 3. AI SOVEREIGN ENGINE (Resilient Logic)
 # ---------------------------------------------------------
 if "GOOGLE_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 else:
-    st.error("⚠️ API Key Missing in Secrets!")
+    st.error("⚠️ API Key Missing!")
     st.stop()
 
-@st.cache_resource
-def get_working_model():
-    """የ 404 ስህተትን ለመከላከል የሚሰራ ሞዴል በራስ-ሰር ይመርጣል"""
-    try:
-        available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-        # ቅድሚያ የምንሰጣቸው ሞዴሎች
-        priority = ["models/gemini-2.0-flash", "models/gemini-1.5-flash", "models/gemini-pro"]
-        for p in priority:
-            if p in available_models: return p
-        return available_models[0]
-    except:
-        return "models/gemini-1.5-flash"
-
-WORKING_MODEL_NAME = get_working_model()
-
 def ask_ai_master(prompt, context="", file_data=None, mime=None):
-    model = genai.GenerativeModel(model_name=WORKING_MODEL_NAME)
-    full_prompt = f"System: You are the 'Ge'ez Scholar AI' created by Grand Architect Deacon Kewn Dejen. Knowledge context: {context}\n\nUser Question: {prompt}"
+    # የሚሰሩ ሞዴሎች ዝርዝር በቅደም ተከተል
+    model_list = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"]
+    full_prompt = f"System: You are 'Ge'ez Scholar AI' created by Deacon Kewn Dejen. Context: {context}\n\nUser Question: {prompt}"
     
-    try:
-        if file_data and mime:
-            response = model.generate_content([full_prompt, {'mime_type': mime, 'data': file_data}])
-        else:
-            response = model.generate_content(full_prompt)
-        return response.text
-    except Exception as e:
-        return f"ሊቁ ጥያቄዎን ሊመልሱ አልቻሉም። ስህተት: {str(e)}"
+    last_error = ""
+    for model_name in model_list:
+        try:
+            model = genai.GenerativeModel(model_name=model_name)
+            # 429 ስህተት ከመጣ 3 ጊዜ ደጋግሞ ይሞክራል
+            for attempt in range(3):
+                try:
+                    if file_data and mime:
+                        response = model.generate_content([full_prompt, {'mime_type': mime, 'data': file_data}])
+                    else:
+                        response = model.generate_content(full_prompt)
+                    return response.text, model_name
+                except Exception as e:
+                    if "429" in str(e):
+                        time.sleep(5) # 5 ሰከንድ ይጠብቃል
+                        continue
+                    raise e
+        except Exception as e:
+            last_error = str(e)
+            continue # ወደሚቀጥለው ሞዴል ይሸጋገራል
+            
+    return f"ሊቁ በአሁኑ ሰዓት ተጨናንቀዋል። ገደብዎ አልቋል፣ እባክዎ ጥቂት ደቂቃ ቆይተው ይሞክሩ። (ስህተት: {last_error})", "None"
 
 # ---------------------------------------------------------
-# 4. FILE PROCESSING (PDF, DOCX)
+# 4. FILE & UI UTILS
 # ---------------------------------------------------------
 def extract_text(uploaded_file):
     name = uploaded_file.name.lower()
@@ -89,99 +88,79 @@ def extract_text(uploaded_file):
         elif name.endswith('.docx'):
             doc = Document(uploaded_file)
             return " ".join([p.text for p in doc.paragraphs])
-    except:
-        return ""
+    except: return ""
     return ""
 
 # ---------------------------------------------------------
-# 5. SIDEBAR: AUTH & PORTALS
+# 5. SIDEBAR
 # ---------------------------------------------------------
 with st.sidebar:
     st.markdown("<h1>🔱 GE'EZ STUDIO</h1>")
-    
     if not st.session_state.logged_in:
         st.markdown("<div class='auth-card'>", unsafe_allow_html=True)
-        mode = st.radio("Access Control", ["Login", "Register"])
-        u = st.text_input("Username")
-        p = st.text_input("Password", type="password")
-        if mode == "Login" and st.button("Sign In"):
-            if u in st.session_state.users and st.session_state.users[u] == p:
-                st.session_state.logged_in, st.session_state.username = True, u
-                st.rerun()
-            else: st.error("Wrong Username or Password")
-        if mode == "Register" and st.button("Create Account"):
-            if u and p:
+        mode = st.radio("Access", ["Login", "Register"])
+        u = st.text_input("User")
+        p = st.text_input("Pass", type="password")
+        if st.button("Enter"):
+            if mode == "Login":
+                if u in st.session_state.users and st.session_state.users[u] == p:
+                    st.session_state.logged_in, st.session_state.username = True, u
+                    st.rerun()
+                else: st.error("Wrong info")
+            else:
                 st.session_state.users[u] = p
-                st.success("Account Created! Please Login.")
-            else: st.error("Fill all fields")
+                st.success("Registered!")
         st.markdown("</div>", unsafe_allow_html=True)
         st.stop()
     else:
-        st.write(f"👑 Welcome, **{st.session_state.username}**")
+        st.write(f"👑 Emperor: **{st.session_state.username}**")
         if st.button("Logout"):
             st.session_state.logged_in = False
             st.rerun()
-
+    
     st.markdown("---")
-    pillar = st.selectbox("Wisdom Pillar", ["🧠 AI Labs", "📜 Digital Archives", "🎓 University"])
     tool = st.radio("System Tools", ["Document Analyzer", "Manuscript OCR", "Voice Assistant"])
 
 # ---------------------------------------------------------
-# 6. MAIN WORKSPACE (Storage, Chat, Voice, History)
+# 6. MAIN SYSTEM
 # ---------------------------------------------------------
 if st.session_state.logged_in:
     st.title(f"{tool} Center")
 
-    # 1. FILE STORAGE & LOADING
-    with st.expander("📁 Imperial Storage (Upload PDF, DOCX, Image, Video)"):
-        up_file = st.file_uploader("Upload document for AI analysis", type=['pdf', 'docx', 'png', 'jpg', 'jpeg', 'mp4'])
+    with st.expander("📁 Upload File"):
+        up_file = st.file_uploader("Upload PDF, DOCX, Image", type=['pdf', 'docx', 'png', 'jpg', 'jpeg'])
         doc_context, f_bytes, f_mime = "", None, None
-        
         if up_file:
             if up_file.type in ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]:
                 doc_context = extract_text(up_file)
-                st.success(f"Document '{up_file.name}' stored in AI context.")
+                st.success("Document Memorized.")
             else:
-                f_bytes = up_file.read()
-                f_mime = up_file.type
-                st.info(f"Media file '{up_file.name}' ready for visual analysis.")
+                f_bytes, f_mime = up_file.read(), up_file.type
+                st.info("Image/Media Ready.")
 
-    # 2. CHAT HISTORY (Persistent for current session)
     if st.session_state.username not in st.session_state.history:
         st.session_state.history[st.session_state.username] = []
 
-    # Display Conversation History
     for chat in st.session_state.history[st.session_state.username]:
-        with st.chat_message(chat["role"]):
-            st.markdown(chat["content"])
+        with st.chat_message(chat["role"]): st.markdown(chat["content"])
 
-    # 3. INTERACTION (Text & Voice Input)
-    voice_enabled = st.checkbox("🎙️ Enable Voice Response (TTS)")
+    voice_on = st.checkbox("🎙️ Voice Response")
     
-    if prompt := st.chat_input("Ask the Sovereign AI..."):
-        # User Message
+    if prompt := st.chat_input("Ask the AI..."):
         st.session_state.history[st.session_state.username].append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.write(prompt)
+        with st.chat_message("user"): st.write(prompt)
 
-        # AI Message
         with st.chat_message("assistant"):
-            with st.spinner("ሊቁ መዛግብቱን በጥልቀት እያመሳከረ ነው..."):
-                answer = ask_ai_master(prompt, doc_context, f_bytes, f_mime)
+            with st.spinner("ሊቁ በማሰብ ላይ ነው..."):
+                answer, engine = ask_ai_master(prompt, doc_context, f_bytes, f_mime)
                 st.markdown(answer)
-                
-                # Voice Response (TTS)
-                if voice_enabled:
+                if voice_on:
                     try:
-                        tts = gTTS(text=answer, lang='en') # Amharic support is partial in gTTS
+                        tts = gTTS(text=answer[:300], lang='en')
                         audio_io = io.BytesIO()
                         tts.write_to_fp(audio_io)
                         st.audio(audio_io, format='audio/mp3')
                     except: pass
-                
                 st.session_state.history[st.session_state.username].append({"role": "assistant", "content": answer})
 
-# ---------------------------------------------------------
-# 7. SOVEREIGN FOOTER
-# ---------------------------------------------------------
-st.markdown("<br><hr><p style='text-align:center; color:#FFD700;'><b>GE'EZ SCHOLAR AI STUDIO | Grand Architect Deacon Kewn Dejen</b><br>© 2026 Sovereign Edition | Engine: "+WORKING_MODEL_NAME+"</p>", unsafe_allow_html=True)
+st.markdown("<br><hr><p style='text-align:center; color:#FFD700;'><b>GE'EZ SCHOLAR AI STUDIO | Deacon Kewn Dejen</b></p>", unsafe_allow_html=True)
