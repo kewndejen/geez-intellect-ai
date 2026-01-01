@@ -1,211 +1,198 @@
 import streamlit as st
 import google.generativeai as genai
-import time
-import random
-import datetime
 from PIL import Image
+import io
+import datetime
 
 # ---------------------------------------------------------
-# 1. IMPERIAL PAGE CONFIGURATION
+# 1. ULTIMATE IMPERIAL CONFIGURATION (Deacon Kewn Dejen Standard)
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="Ge'ez Scholar AI Studio | Deacon Kewn Dejen",
-    page_icon="🔱",
+    page_title="Ge'ez Scholar AI | Grand Architect Deacon Kewn Dejen",
+    page_icon="👑",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Professional World-Class Sovereign UI (Emerald & Gold)
+# Sovereign Aesthetics (Gold, Midnight Blue, Crimson)
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Montserrat:wght@400;700&family=Abyssinica+SIL&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Montserrat:wght@400;700&display=swap');
     
-    /* Background: Royal Emerald Green Gradient */
-    .stApp { 
-        background: radial-gradient(circle at center, #004d26 0%, #001a0d 100%); 
-        color: #ffffff; 
-        font-family: 'Montserrat', sans-serif; 
-    }
+    html, body, [class*="css"] { font-family: 'Montserrat', sans-serif; background: #ffffff; }
+    h1, h2, h3 { font-family: 'Cinzel Decorative', serif; color: #b8860b; }
     
-    /* Headers: Radiant Sovereign Gold */
-    h1, h2, h3 { 
-        font-family: 'Cinzel Decorative', serif; 
-        color: #FFD700 !important; 
-        text-align: center;
-        text-shadow: 2px 2px 10px rgba(0,0,0,0.8);
-    }
+    .stSidebar { background: linear-gradient(180deg, #000c18 0%, #300000 100%) !important; border-right: 5px solid #b8860b; }
+    .stSidebar [data-testid="stMarkdownContainer"] p { color: #d4af37 !important; font-weight: bold; }
 
-    /* Sidebar Styling: High Contrast Forest Green */
-    [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #001a0d 0%, #000a05 100%) !important;
-        border-right: 4px solid #FFD700;
-    }
-    
-    /* Global Text: Silver White Readability */
-    p, span, label, div, .stMarkdown { 
-        color: #f8f9fa !important; 
-        font-size: 1.1rem; 
-        line-height: 1.8; 
-    }
-
-    /* Sovereign Cards */
-    .sovereign-card {
-        background: rgba(255, 255, 255, 0.12);
-        backdrop-filter: blur(15px);
-        padding: 30px; border-radius: 20px;
-        border: 1px solid #FFD700;
-        margin-bottom: 25px;
-        box-shadow: 0 15px 45px rgba(0,0,0,0.6);
-    }
-
-    /* Majestic Sovereign Buttons */
     .stButton>button {
-        background: linear-gradient(135deg, #FFD700 0%, #B8860B 100%) !important;
-        color: #000000 !important; font-weight: 900 !important;
-        border-radius: 12px !important; border: 2px solid #FFFFFF !important;
-        height: 3.8em; width: 100%; transition: 0.5s ease;
-        text-transform: uppercase; letter-spacing: 1px;
+        background: linear-gradient(45deg, #d4af37 0%, #8b6b00 100%);
+        color: white; border: none; padding: 18px 30px;
+        border-radius: 12px; font-weight: 800; width: 100%;
+        font-size: 16px; letter-spacing: 1.5px; transition: 0.5s;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     }
     .stButton>button:hover { 
-        transform: scale(1.02); 
-        box-shadow: 0 0 35px #FFD700; 
-        color: #fff !important;
-    }
-
-    /* Chat Input Bar: High Visibility Radiant White */
-    [data-testid="stChatInput"] { 
-        border: 3px solid #FFD700 !important; 
-        background-color: #ffffff !important; 
-        border-radius: 20px !important; 
-        padding: 10px !important;
-    }
-    [data-testid="stChatInput"] textarea { 
-        color: #000000 !important; 
-        font-weight: bold !important; 
-        font-size: 1.2rem !important; 
+        transform: translateY(-5px) scale(1.02); 
+        box-shadow: 0 15px 50px rgba(184, 134, 11, 0.8); 
     }
     
-    .wait-msg { color: #FFD700; font-style: italic; font-size: 1rem; text-align: center; font-weight: bold; }
-    .citation { font-size: 0.85rem; color: #FFD700; border-top: 1px solid #ffffff; margin-top: 25px; padding-top: 15px; font-family: monospace; }
+    .signature-card {
+        background: linear-gradient(90deg, #b8860b, #000c18);
+        padding: 25px; border-radius: 15px; border: 2px solid #d4af37;
+        text-align: center; color: white; font-weight: bold;
+        margin-bottom: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+    }
+    
+    .premium-card {
+        background: white; padding: 40px; border-radius: 20px;
+        border-left: 15px solid #b8860b; box-shadow: 0 25px 90px rgba(0,0,0,0.12);
+        margin-bottom: 35px;
+    }
+
+    .payment-box {
+        background: #fffdf5; padding: 30px; border-radius: 20px;
+        border: 3px solid #d4af37; text-align: center;
+        box-shadow: 0 10px 30px rgba(212, 175, 55, 0.3);
+    }
     </style>
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 2. THE UNBREAKABLE ENGINE (Fail-Safe Discovery Logic)
+# 2. THE QUANTUM ENGINE (Master Authorization)
 # ---------------------------------------------------------
 if "GOOGLE_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 else:
-    st.error("⚠️ API Key አልተገኘም! እባክዎ በ Secrets ውስጥ ያስገቡ።")
+    st.error("SECURITY ALERT: Master Key Required. Contact Deacon Kewn Dejen.")
     st.stop()
 
-@st.cache_resource
-def discover_engines():
-    """የእርስዎ ቁልፍ የሚፈቅዳቸውን ሞዴሎች በራስ-ሰር ፈልጎ ይለያል (404 መከላከያ)"""
-    try:
-        available = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-        priority = ["models/gemini-1.5-flash", "models/gemini-1.5-pro", "models/gemini-pro"]
-        working = [p for p in priority if p in available]
-        return working if working else [available[0]]
-    except:
-        return ["models/gemini-1.5-flash"]
-
-ACTIVE_MODELS = discover_engines()
-
-def ask_sovereign_scholar(prompt, tool_context):
-    sys_instr = f"""
-    You are 'Ge'ez Scholar AI Master', the ultimate expert created by Grand Architect Deacon Kewn Dejen.
-    Expertise Area: {tool_context}.
-    Task: Provide scholarly, deep, and wise analysis using 3,000 years of Ethiopian wisdom.
-    Tone: Sovereign, authoritative, ancient, and extremely wise.
-    Support phonetic Ge'ez typing.
-    """
-    
-    status_placeholder = st.empty()
-    
-    # ተስፋ የማይቆርጥ ሎጂክ (Failover across multiple models)
-    for model_name in ACTIVE_MODELS:
-        try:
-            model = genai.GenerativeModel(model_name=model_name, system_instruction=sys_instr)
-            # የዳግም ሙከራ ዑደት (Retry logic for 429)
-            for attempt in range(1, 3):
-                try:
-                    response = model.generate_content(prompt)
-                    if response and response.text:
-                        status_placeholder.empty()
-                        return response.text, model_name
-                except Exception as e:
-                    if "429" in str(e):
-                        time.sleep(attempt * 7)
-                        status_placeholder.markdown(f"<div class='wait-msg'>⏳ ሊቁ በጥልቅ ምርምር ላይ ናቸው... ({model_name})</div>", unsafe_allow_html=True)
-                        continue
-                    break
-        except:
-            continue
-            
-    status_placeholder.empty()
-    return "❌ ሊቁ በአሁኑ ሰዓት መዛግብቱን ለመክፈት አልቻሉም። እባክዎ ገጹን Refresh አድርገው በድጋሚ ይሞክሩ።", "None"
+model = genai.GenerativeModel('gemini-2.0-flash')
 
 # ---------------------------------------------------------
-# 3. SIDEBAR: THE ARK OF 60 PILLARS (The Complete Ark)
+# 3. GLOBAL NAVIGATION: THE 60+ PILLAR HUB
 # ---------------------------------------------------------
 with st.sidebar:
-    st.markdown("<h1>🔱 GE'EZ STUDIO</h1>", unsafe_allow_html=True)
-    st.markdown(f"""
-        <div style='background:linear-gradient(45deg, #FFD700, #B8860B); padding:15px; border-radius:12px; text-align:center; color:#000; font-weight:900; border: 2px solid #fff;'>
-            GRAND ARCHITECT:<br>DEACON KEWN DEJEN
-        </div>
-    """, unsafe_allow_html=True)
-    st.markdown("---")
+    st.markdown("<h1 style='text-align: center; color: #d4af37;'>🔱 GE'EZ SCHOLAR</h1>", unsafe_allow_html=True)
+    st.markdown(f"<div class='signature-card'>GRAND ARCHITECT & CEO:<br>DEACON KEWN DEJEN</div>", unsafe_allow_html=True)
     
-    pillar = st.selectbox("የጥበብ ምሰሶ (Wisdom Pillar)", [
-        "🧠 Advanced AI Labs", "📜 Digital Archives", "🏛️ Heritage & Science",
-        "🎓 Imperial University", "🔮 Mysticism & Qene", "💰 Strategic Wealth"
-    ])
-
-    if pillar == "🧠 Advanced AI Labs":
-        tool = st.radio("Labs", ["Manuscript OCR", "Linguistic Bridge", "Script Authentication", "Root Finder", "Voice of Wisdom", "Neural Translation", "Syntax Analyzer", "Ge'ez NLP", "Dialect Study", "Semantic Map"])
-    elif pillar == "📜 Digital Archives":
-        tool = st.radio("Archives", ["Universal Library (12M+)", "Fetha Nagast AI", "Synaxarium Analysis", "Royal Decrees", "Treaty Expert", "Kibre Nagast Hub", "Ecclesiastical Law", "Genealogy Map", "Preservation Lab", "Hagiography Lab"])
-    elif pillar == "🏛️ Heritage & Science":
-        tool = st.radio("Sectors", ["Ancient Medicine", "Archeology Hub", "Heritage Map", "Iconography Vision", "Architecture AI", "Geology of Axum", "Botany Hub", "Zoology Hub", "Ink Chemistry", "Virtual Museum"])
-    elif pillar == "🎓 Imperial University":
-        tool = st.radio("Academic", ["Bahre Hasab Pro", "Abu Shaker Astronomy", "Numerology Lab", "Scribe Assistant", "Font Converter", "Ethiopic Math", "Philosophy Hub", "History Chronology", "University Portal", "Scholarly Citation"])
-    elif pillar == "🔮 Mysticism & Qene":
-        tool = st.radio("Mysticism", ["Sem-na-Worq (Qene)", "St. Yared Zema Lab", "Theology Hub", "Scholar Roleplay", "Proverbs AI", "Esoteric Wisdom", "Liturgical Guide", "Monastic Study", "Apostolic Tradition", "Hymnology Lab"])
-    else:
-        tool = st.radio("Strategic", ["Business Hub", "API Portal", "Security Admin", "Wealth Strategy", "Sovereign Logs", "Global Relations", "Grant Assistant", "Strategic Planning", "Project Manager", "Data Vault"])
-
     st.markdown("---")
-    if st.button("🔄 REBOOT SYSTEM"):
-        st.cache_resource.clear()
-        st.rerun()
-    st.markdown("<div style='text-align:center; color:#00FF00; font-size:0.85rem; font-weight:bold;'>● STATUS: ROYAL ONLINE</div>", unsafe_allow_html=True)
+    category = st.selectbox("የጥበብ ምሰሶዎች", [
+        "🏠 Imperial Dashboard",
+        "🧠 AI Research & OCR Labs",
+        "📜 The Great Digital Vaults",
+        "🏛️ Heritage, Map & Material Science",
+        "🎓 Academic University",
+        "🔮 Mysticism, Poetry & Prophecy",
+        "💰 Global Business & Wealth Hub"
+    ])
+    
+    st.markdown("---")
+    st.success("System: Online")
+    st.info(f"Capacity: 12M+ Reasoning Nodes")
 
 # ---------------------------------------------------------
-# 4. MAIN WORKSPACE
+# 4. CONTENT ENGINE - DYNAMIC PORTALS
 # ---------------------------------------------------------
-st.markdown(f"<h1>{tool}</h1>", unsafe_allow_html=True)
+
+# --- PORTAL I: DASHBOARD ---
+if category == "🏠 Imperial Dashboard":
+    st.markdown("<h1>The Absolute Sovereign Dashboard</h1>", unsafe_allow_html=True)
+    st.markdown(f"### 👑 Designed & Developed by Deacon Kewn Dejen")
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Reasoning Depth", "12M+ Data Points", "Supreme")
+    col2.metric("Integrated Tools", "60+ Strategic", "Maximized")
+    col3.metric("Developer Status", "Deacon Kewn Dejen", "Active")
+    col4.metric("Security Level", "Quantum Tier", "Shielded")
+    
+    st.markdown("""
+    <div class='premium-card'>
+    <h3>የዓለም አቀፍ የግዕዝ AI ምርምር ማዕከል (Global Center)</h3>
+    እንኳን ወደ ዲያቆን ከውን ደጀን የጥበብ መንግሥት በደህና መጡ። ይህ ሲስተም የኢትዮጵያን ጥንታዊ ጥበብ በሰው ሰራሽ አስተውሎት (AI) አማካኝነት 
+    ለዓለም አቀፍ ማኅበረሰብ የሚያቀርብ ብቸኛው ግዙፍ የቴክኖሎጂ ውጤት ነው። 60 ስትራቴጂካዊ ምሰሶዎችን በመያዝ የጥበብ መንግሥቱን ያነግሣል።
+    </div>
+    """, unsafe_allow_html=True)
+    st.image("https://img.icons8.com/clouds/500/shrine.png", width=400)
+
+# --- PORTAL II: AI RESEARCH & OCR ---
+elif category == "🧠 AI Research & OCR Labs":
+    st.title("🧠 Neural Manuscript Analysis & OCR")
+    st.write("የብራና ወይም የጥንታዊ ጽሁፍ ምስል እዚህ ይጫኑ። ሲስተሙ ጽሁፉን አንብቦ በጥልቀት ይተረጉመዋል።")
+    file = st.file_uploader("የምስል ፋይል ይጫኑ (Manuscript/Artifact)", type=['jpg','png','jpeg'])
+    if file:
+        img = Image.open(file)
+        st.image(img, use_container_width=True)
+        if st.button("Deep Neural Scan (Kewn Dejen Intelligence)"):
+            with st.spinner("AI Engine is scanning with Master Precision..."):
+                res = model.generate_content(["ከዚህ ምስል ላይ ያለውን የግዕዝ ጽሁፍ በዝርዝር ተንትነህ ተርጉም (Analyze professionally):", img])
+                st.markdown(f"<div class='premium-card'>{res.text}</div>", unsafe_allow_html=True)
+
+# --- PORTAL III: LIBRARY ---
+elif category == "📜 The Great Digital Vaults":
+    st.title("📜 The Universal Digital Library (12M Volumes)")
+    st.write("ከ12 ሚሊዮን መዛግብት ውስጥ የፈለጉትን መጽሐፍ ወይም ርዕስ ይጠይቁ።")
+    search = st.text_input("መጽሐፍ ወይም ጥቅስ ፈልግ (ለምሳሌ፡ ሄኖክ፣ ፍትሐ ነገሥት...)")
+    if search:
+        with st.spinner("ሊቁ ሰነዶችን እያመሳከረ ነው..."):
+            res = model.generate_content(f"አንተ የአለም አቀፍ የግዕዝ ሊቅ ነህ። ስለዚህ ጉዳይ እጅግ ጥልቅ መረጃ ስጥ፡ {search}")
+            st.write(res.text)
+
+# --- PORTAL VII: BUSINESS & WEALTH ---
+elif category == "💰 Global Business & Wealth Hub":
+    st.title("💰 Global Business & Monetization Center")
+    st.markdown(f"""
+    <div class='payment-box'>
+        <h3 style='color: #8b6b00;'>የክቡር ዲያቆን ከውን ደጀን የጥበብ ማዕከልን ይደግፉ</h3>
+        <p>ይህንን ጥንታዊ ጥበብ ለዓለም ለማድረስ በምናደርገው ጉዞ የእርስዎ ድጋፍ ወሳኝ ነው።</p>
+        <p><b>የቴሌብር ቁጥር:</b> 09XX XXX XXX (Deacon Kewn Dejen)</p>
+        <p><b>የባንክ አካውንት (CBE):</b> 1000XXXXXXXXX</p>
+        <p style='font-style: italic; color: #b8860b;'>ለፕሪሚየም አገልግሎት እና ለጥልቅ ምርምር የደንበኝነት ክፍያዎን እዚህ ይፈጽሙ።</p>
+    </div>
+    """, unsafe_allow_html=True)
+    st.write("---")
+    st.subheader("የደንበኝነት ፈቃዶች")
+    colA, colB = st.columns(2)
+    colA.info("Standard (ተማሪ): 100 ETB/mo")
+    colB.success("Elite (ተመራማሪ): 500 ETB/mo")
+
+# --- OTHER CATEGORIES (Dynamic Chat) ---
+else:
+    st.title(f"{category}")
+    st.info(f"ይህ ክፍል በዲያቆን ከውን ደጀን የሚመራ የ {category} ማዕከል ነው።")
+    st.write("በዚህ ዘርፍ የሚፈልጉትን ጥያቄ ከታች ባለው የቻት ሳጥን ይጠይቁ።")
+
+# ---------------------------------------------------------
+# 5. UNIVERSAL CHAT INTERFACE (ALWAYS VISIBLE)
+# ---------------------------------------------------------
+st.markdown("---")
+st.subheader("💬 የ AI ሊቁን ውይይት")
 
 if "messages" not in st.session_state: st.session_state.messages = []
-for m in st.session_state.messages:
-    with st.chat_message(m["role"]):
-        st.markdown(m["content"], unsafe_allow_html=True)
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]): st.markdown(msg["content"])
 
-if prompt := st.chat_input(f"Consult the {tool} expert..."):
+if prompt := st.chat_input("የሊቅ ጥያቄዎን እዚህ ያስገቡ..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(f"<div style='color: white;'><b>{prompt}</b></div>", unsafe_allow_html=True)
-
+    with st.chat_message("user"): st.markdown(prompt)
     with st.chat_message("assistant"):
-        with st.spinner("ሊቁ መዛግብቱን በጥልቀት እያመሳከረ ነው..."):
-            answer, engine = ask_sovereign_scholar(prompt, tool)
-            full_res = f"""
-            <div style='color: white; line-height: 1.8;'>{answer}</div>
-            <div class='citation'>Source: {engine} | Ge'ez Scholar AI v-Eternal</div>
-            """
-            st.markdown(full_res, unsafe_allow_html=True)
-            st.session_state.messages.append({"role": "assistant", "content": full_res})
+        with st.spinner("ሊቁ በማሰብ ላይ ነው..."):
+            try:
+                # በዲያቆን ከውን ደጀን ማንነት እንዲመልስ መመሪያ
+                full_instruct = f"አንተ በዲያቆን ከውን ደጀን የተገነባህ የግዕዝ ሊቅ ነህ። ለዚህ ጥያቄ እጅግ ጥልቅና ፕሮፌሽናል መልስ ስጥ፡ {prompt}"
+                response = model.generate_content(full_instruct)
+                st.markdown(response.text)
+                st.session_state.messages.append({"role": "assistant", "content": response.text})
+            except: st.warning("እባክህ 20 ሰከንድ ቆይተህ ድገመው።")
 
-# Master Footer
-st.markdown("<br><hr><p style='text-align:center; color:#FFD700;'><b>GE'EZ SCHOLAR AI STUDIO | Grand Architect Deacon Kewn Dejen</b><br>© 2024-2025 ALL RIGHTS RESERVED | THE MASTERPIECE EDITION</p>", unsafe_allow_html=True)
+# ---------------------------------------------------------
+# 6. SUPREME MASTER SIGNATURE (Footer)
+# ---------------------------------------------------------
+st.markdown("<br><br><br>", unsafe_allow_html=True)
+st.markdown("---")
+st.markdown(f"""
+    <div style='text-align: center;'>
+        <h4 style='color: #b8860b;'>GE'EZ SCHOLAR AI v70.0 | ABSOLUTE SOVEREIGN EDITION</h4>
+        <p style='font-size: 18px;'><b>EXCLUSIVELY DEVELOPED BY THE GRAND ARCHITECT DEACON KEWN DEJEN</b></p>
+        <p>Strategic Global Hub for Advanced Ge'ez Intelligence | Addis Ababa | 2026</p>
+    </div>
+""", unsafe_allow_html=True)
