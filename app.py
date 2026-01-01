@@ -2,7 +2,6 @@ import streamlit as st
 import google.generativeai as genai
 import time
 import os
-import datetime
 from PIL import Image
 import PyPDF2
 from docx import Document
@@ -15,11 +14,10 @@ import io
 st.set_page_config(
     page_title="Ge'ez Scholar AI Studio | Deacon Kewn Dejen",
     page_icon="🔱",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    layout="wide"
 )
 
-# Professional World-Class UI (Emerald & Gold)
+# Sovereign UI (Emerald & Gold)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Montserrat:wght@400;700&display=swap');
@@ -35,81 +33,87 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 2. AUTHENTICATION & STORAGE LOGIC
+# 2. SESSION STATE (Auth, History, Storage)
 # ---------------------------------------------------------
-if 'users' not in st.session_state: st.session_state.users = {"admin": "kewn123"}
+if 'users' not in st.session_state: st.session_state.users = {"deaconkewn": "AB12@#cdamdegeez"}
 if 'logged_in' not in st.session_state: st.session_state.logged_in = False
 if 'username' not in st.session_state: st.session_state.username = ""
-if 'chat_history' not in st.session_state: st.session_state.chat_history = {}
-
-def login_user(u, p):
-    if u in st.session_state.users and st.session_state.users[u] == p:
-        st.session_state.logged_in = True
-        st.session_state.username = u
-        return True
-    return False
-
-def register_user(u, p):
-    if u not in st.session_state.users:
-        st.session_state.users[u] = p
-        return True
-    return False
+if 'history' not in st.session_state: st.session_state.history = {} # User history
 
 # ---------------------------------------------------------
-# 3. FILE PROCESSING (PDF, DOCX, HTML)
-# ---------------------------------------------------------
-def extract_text(file):
-    fname = file.name.lower()
-    if fname.endswith('.pdf'):
-        pdf_reader = PyPDF2.PdfReader(file)
-        return "".join([page.extract_text() for page in pdf_reader.pages])
-    elif fname.endswith('.docx'):
-        doc = Document(file)
-        return "".join([p.text for p in doc.paragraphs])
-    elif fname.endswith('.html'):
-        return file.read().decode("utf-8")
-    return ""
-
-# ---------------------------------------------------------
-# 4. AI ENGINE (FAIL-SAFE)
+# 3. AI SOVEREIGN ENGINE (Auto-Fix for 404 Error)
 # ---------------------------------------------------------
 if "GOOGLE_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 else:
-    st.error("⚠️ API Key Missing!")
+    st.error("⚠️ API Key Missing in Secrets!")
     st.stop()
 
-def ask_ai(prompt, context_text="", file_bytes=None, mime_type=None):
-    model = genai.GenerativeModel("gemini-1.5-flash")
-    full_prompt = f"Context from Document: {context_text}\n\nUser Question: {prompt}"
+@st.cache_resource
+def get_working_model():
+    """የ 404 ስህተትን ለመከላከል የሚሰራ ሞዴል በራስ-ሰር ይመርጣል"""
+    try:
+        available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+        # ቅድሚያ የምንሰጣቸው ሞዴሎች
+        priority = ["models/gemini-2.0-flash", "models/gemini-1.5-flash", "models/gemini-pro"]
+        for p in priority:
+            if p in available_models: return p
+        return available_models[0]
+    except:
+        return "models/gemini-1.5-flash"
+
+WORKING_MODEL_NAME = get_working_model()
+
+def ask_ai_master(prompt, context="", file_data=None, mime=None):
+    model = genai.GenerativeModel(model_name=WORKING_MODEL_NAME)
+    full_prompt = f"System: You are the 'Ge'ez Scholar AI' created by Grand Architect Deacon Kewn Dejen. Knowledge context: {context}\n\nUser Question: {prompt}"
     
-    if file_bytes and mime_type:
-        response = model.generate_content([full_prompt, {'mime_type': mime_type, 'data': file_bytes}])
-    else:
-        response = model.generate_content(full_prompt)
-    return response.text
+    try:
+        if file_data and mime:
+            response = model.generate_content([full_prompt, {'mime_type': mime, 'data': file_data}])
+        else:
+            response = model.generate_content(full_prompt)
+        return response.text
+    except Exception as e:
+        return f"ሊቁ ጥያቄዎን ሊመልሱ አልቻሉም። ስህተት: {str(e)}"
 
 # ---------------------------------------------------------
-# 5. SIDEBAR: AUTH & PILLARS
+# 4. FILE PROCESSING (PDF, DOCX)
+# ---------------------------------------------------------
+def extract_text(uploaded_file):
+    name = uploaded_file.name.lower()
+    try:
+        if name.endswith('.pdf'):
+            reader = PyPDF2.PdfReader(uploaded_file)
+            return " ".join([page.extract_text() for page in reader.pages])
+        elif name.endswith('.docx'):
+            doc = Document(uploaded_file)
+            return " ".join([p.text for p in doc.paragraphs])
+    except:
+        return ""
+    return ""
+
+# ---------------------------------------------------------
+# 5. SIDEBAR: AUTH & PORTALS
 # ---------------------------------------------------------
 with st.sidebar:
     st.markdown("<h1>🔱 GE'EZ STUDIO</h1>")
     
     if not st.session_state.logged_in:
         st.markdown("<div class='auth-card'>", unsafe_allow_html=True)
-        tab_login, tab_reg = st.tabs(["Login", "Register"])
-        with tab_login:
-            u = st.text_input("Username", key="l_u")
-            p = st.text_input("Password", type="password", key="l_p")
-            if st.button("Login"):
-                if login_user(u, p): st.rerun()
-                else: st.error("Invalid credentials")
-        with tab_reg:
-            nu = st.text_input("New Username", key="r_u")
-            np = st.text_input("New Password", type="password", key="r_p")
-            if st.button("Register"):
-                if register_user(nu, np): st.success("Registered! Please Login.")
-                else: st.error("User exists")
+        mode = st.radio("Access Control", ["Login", "Register"])
+        u = st.text_input("Username")
+        p = st.text_input("Password", type="password")
+        if mode == "Login" and st.button("Sign In"):
+            if u in st.session_state.users and st.session_state.users[u] == p:
+                st.session_state.logged_in, st.session_state.username = True, u
+                st.rerun()
+            else: st.error("Wrong Username or Password")
+        if mode == "Register" and st.button("Create Account"):
+            if u and p:
+                st.session_state.users[u] = p
+                st.success("Account Created! Please Login.")
+            else: st.error("Fill all fields")
         st.markdown("</div>", unsafe_allow_html=True)
         st.stop()
     else:
@@ -119,65 +123,65 @@ with st.sidebar:
             st.rerun()
 
     st.markdown("---")
-    pillar = st.selectbox("የጥበብ ምሰሶ", ["🧠 AI Labs", "📜 Archives", "🎓 University", "💰 Strategic"])
-    tool = st.radio("Tools", ["Document Analyzer", "Voice Assistant", "Manuscript OCR", "History Vault"])
+    pillar = st.selectbox("Wisdom Pillar", ["🧠 AI Labs", "📜 Digital Archives", "🎓 University"])
+    tool = st.radio("System Tools", ["Document Analyzer", "Manuscript OCR", "Voice Assistant"])
 
 # ---------------------------------------------------------
-# 6. MAIN CONTENT: FILE STORAGE & AI
+# 6. MAIN WORKSPACE (Storage, Chat, Voice, History)
 # ---------------------------------------------------------
 if st.session_state.logged_in:
-    st.markdown(f"<h1>{tool} Center</h1>", unsafe_allow_html=True)
+    st.title(f"{tool} Center")
 
-    # File Storage & Upload
-    with st.expander("📁 Upload & Store Documents (PDF, DOCX, Images, Video)"):
-        uploaded_file = st.file_uploader("Choose a file", type=['pdf', 'docx', 'html', 'png', 'jpg', 'jpeg', 'mp4'])
-        doc_context = ""
-        file_payload = None
-        m_type = None
+    # 1. FILE STORAGE & LOADING
+    with st.expander("📁 Imperial Storage (Upload PDF, DOCX, Image, Video)"):
+        up_file = st.file_uploader("Upload document for AI analysis", type=['pdf', 'docx', 'png', 'jpg', 'jpeg', 'mp4'])
+        doc_context, f_bytes, f_mime = "", None, None
+        
+        if up_file:
+            if up_file.type in ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]:
+                doc_context = extract_text(up_file)
+                st.success(f"Document '{up_file.name}' stored in AI context.")
+            else:
+                f_bytes = up_file.read()
+                f_mime = up_file.type
+                st.info(f"Media file '{up_file.name}' ready for visual analysis.")
 
-        if uploaded_file:
-            if uploaded_file.type in ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]:
-                doc_context = extract_text(uploaded_file)
-                st.success(f"{uploaded_file.name} Loaded into AI Memory.")
-            elif uploaded_file.type.startswith("image/"):
-                file_payload = uploaded_file.read()
-                m_type = uploaded_file.type
-                st.image(uploaded_file, width=300)
-            elif uploaded_file.type.startswith("video/"):
-                file_payload = uploaded_file.read()
-                m_type = uploaded_file.type
-                st.video(uploaded_file)
+    # 2. CHAT HISTORY (Persistent for current session)
+    if st.session_state.username not in st.session_state.history:
+        st.session_state.history[st.session_state.username] = []
 
-    # Chat Interface
-    if st.session_state.username not in st.session_state.chat_history:
-        st.session_state.chat_history[st.session_state.username] = []
+    # Display Conversation History
+    for chat in st.session_state.history[st.session_state.username]:
+        with st.chat_message(chat["role"]):
+            st.markdown(chat["content"])
 
-    # Display History
-    for chat in st.session_state.chat_history[st.session_state.username]:
-        with st.chat_message(chat["role"]): st.markdown(chat["content"])
-
-    # Input (Text or Voice placeholder)
-    prompt = st.chat_input("Ask the AI about your documents or Ge'ez wisdom...")
+    # 3. INTERACTION (Text & Voice Input)
+    voice_enabled = st.checkbox("🎙️ Enable Voice Response (TTS)")
     
-    # Voice Input Simulation
-    voice_on = st.checkbox("🎙️ Enable Voice Mode (Read Aloud)")
+    if prompt := st.chat_input("Ask the Sovereign AI..."):
+        # User Message
+        st.session_state.history[st.session_state.username].append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.write(prompt)
 
-    if prompt:
-        st.session_state.chat_history[st.session_state.username].append({"role": "user", "content": prompt})
-        with st.chat_message("user"): st.write(prompt)
-
+        # AI Message
         with st.chat_message("assistant"):
-            with st.spinner("ሊቁ በማሰብ ላይ ነው..."):
-                answer = ask_ai(prompt, doc_context, file_payload, m_type)
+            with st.spinner("ሊቁ መዛግብቱን በጥልቀት እያመሳከረ ነው..."):
+                answer = ask_ai_master(prompt, doc_context, f_bytes, f_mime)
                 st.markdown(answer)
                 
-                if voice_on:
-                    tts = gTTS(text=answer, lang='en') # Amharic support can be added if gTTS updated
-                    audio_fp = io.BytesIO()
-                    tts.write_to_fp(audio_fp)
-                    st.audio(audio_fp, format='audio/mp3')
+                # Voice Response (TTS)
+                if voice_enabled:
+                    try:
+                        tts = gTTS(text=answer, lang='en') # Amharic support is partial in gTTS
+                        audio_io = io.BytesIO()
+                        tts.write_to_fp(audio_io)
+                        st.audio(audio_io, format='audio/mp3')
+                    except: pass
+                
+                st.session_state.history[st.session_state.username].append({"role": "assistant", "content": answer})
 
-                st.session_state.chat_history[st.session_state.username].append({"role": "assistant", "content": answer})
-
-# Footer
-st.markdown("<br><hr><p style='text-align:center; color:#FFD700;'><b>GE'EZ SCHOLAR AI STUDIO | Deacon Kewn Dejen</b><br>© 2026 Sovereign Edition</p>", unsafe_allow_html=True)
+# ---------------------------------------------------------
+# 7. SOVEREIGN FOOTER
+# ---------------------------------------------------------
+st.markdown("<br><hr><p style='text-align:center; color:#FFD700;'><b>GE'EZ SCHOLAR AI STUDIO | Grand Architect Deacon Kewn Dejen</b><br>© 2026 Sovereign Edition | Engine: "+WORKING_MODEL_NAME+"</p>", unsafe_allow_html=True)
