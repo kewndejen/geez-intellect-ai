@@ -157,8 +157,8 @@ else:
         st.markdown(f"""
         <div style='background: #fffdf5; padding: 30px; border-radius: 20px; border: 3px solid #d4af37; text-align: center;'>
             <h3>የዲያቆን ከውን ደጀን የጥበብ ማዕከል</h3>
-            <p>የቴሌብር ቁጥር: 09XX XXX XXX</p>
-            <p>CBE: 1000XXXXXXXXX</p>
+            <p>የቴሌብር ቁጥር: 0980 520 360</p>
+            <p>CBE: 1000232328243</p>
         </div>
         """, unsafe_allow_html=True)
 
