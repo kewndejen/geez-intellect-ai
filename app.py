@@ -1,167 +1,183 @@
 import streamlit as st
 import google.generativeai as genai
-from PIL import Image
-import os
 import time
-from pypdf import PdfReader
+import os
+import datetime
+from PIL import Image
+import PyPDF2
 from docx import Document
-from bs4 import BeautifulSoup
 from gtts import gTTS
-import base64
+import io
 
 # ---------------------------------------------------------
-# 1. IMPERIAL CONFIGURATION & THEME
+# 1. IMPERIAL PAGE CONFIGURATION
 # ---------------------------------------------------------
-st.set_page_config(page_title="Ge'ez Scholar AI | Deacon Kewn Dejen", page_icon="🔱", layout="wide")
+st.set_page_config(
+    page_title="Ge'ez Scholar AI Studio | Deacon Kewn Dejen",
+    page_icon="🔱",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
+# Professional World-Class UI (Emerald & Gold)
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Montserrat:wght@400;700&display=swap');
-    html, body, [class*="css"] { font-family: 'Montserrat', sans-serif; }
-    .stSidebar { background: linear-gradient(180deg, #000c18 0%, #300000 100%) !important; border-right: 5px solid #b8860b; color: white; }
-    h1, h2, h3 { font-family: 'Cinzel Decorative', serif; color: #b8860b; }
-    .stButton>button { background: linear-gradient(45deg, #d4af37 0%, #8b6b00 100%); color: white; border-radius: 10px; font-weight: 800; width: 100%; }
-    .auth-box { background: #fdfdfd; padding: 30px; border-radius: 20px; border: 2px solid #d4af37; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Montserrat:wght@400;700&display=swap');
+    .stApp { background: radial-gradient(circle at center, #004d26 0%, #001a0d 100%); color: #ffffff; }
+    h1, h2, h3 { font-family: 'Cinzel Decorative', serif; color: #FFD700 !important; text-align: center; }
+    [data-testid="stSidebar"] { background: linear-gradient(180deg, #001a0d 0%, #000a05 100%) !important; border-right: 4px solid #FFD700; }
+    .stButton>button {
+        background: linear-gradient(135deg, #FFD700 0%, #B8860B 100%) !important;
+        color: #000 !important; font-weight: 900 !important; border-radius: 12px !important;
+    }
+    .auth-card { background: rgba(255, 255, 255, 0.1); padding: 20px; border-radius: 15px; border: 1px solid #FFD700; margin-bottom: 10px; }
     </style>
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 2. DATA STORAGE & SESSION MANAGEMENT
+# 2. AUTHENTICATION & STORAGE LOGIC
 # ---------------------------------------------------------
-if "users" not in st.session_state: st.session_state.users = {"admin": "admin123"} # Mock DB
-if "logged_in" not in st.session_state: st.session_state.logged_in = False
-if "username" not in st.session_state: st.session_state.username = ""
-if "chat_history" not in st.session_state: st.session_state.chat_history = []
+if 'users' not in st.session_state: st.session_state.users = {"admin": "kewn123"}
+if 'logged_in' not in st.session_state: st.session_state.logged_in = False
+if 'username' not in st.session_state: st.session_state.username = ""
+if 'chat_history' not in st.session_state: st.session_state.chat_history = {}
+
+def login_user(u, p):
+    if u in st.session_state.users and st.session_state.users[u] == p:
+        st.session_state.logged_in = True
+        st.session_state.username = u
+        return True
+    return False
+
+def register_user(u, p):
+    if u not in st.session_state.users:
+        st.session_state.users[u] = p
+        return True
+    return False
 
 # ---------------------------------------------------------
-# 3. FILE PROCESSING FUNCTIONS (PDF, DOCX, HTML)
+# 3. FILE PROCESSING (PDF, DOCX, HTML)
 # ---------------------------------------------------------
 def extract_text(file):
-    fname = file.name
-    if fname.endswith(".pdf"):
-        reader = PdfReader(file)
-        return " ".join([page.extract_text() for page in reader.pages])
-    elif fname.endswith(".docx"):
+    fname = file.name.lower()
+    if fname.endswith('.pdf'):
+        pdf_reader = PyPDF2.PdfReader(file)
+        return "".join([page.extract_text() for page in pdf_reader.pages])
+    elif fname.endswith('.docx'):
         doc = Document(file)
-        return " ".join([p.text for p in doc.paragraphs])
-    elif fname.endswith(".html"):
-        soup = BeautifulSoup(file, "html.parser")
-        return soup.get_text()
+        return "".join([p.text for p in doc.paragraphs])
+    elif fname.endswith('.html'):
+        return file.read().decode("utf-8")
     return ""
 
-def text_to_speech(text):
-    tts = gTTS(text=text[:250], lang='en') # Limits to first 250 chars for speed
-    tts.save("response.mp3")
-    with open("response.mp3", "rb") as f:
-        data = f.read()
-    b64 = base64.b64encode(data).decode()
-    return f'<audio controls src="data:audio/mp3;base64,{b64}">'
-
 # ---------------------------------------------------------
-# 4. AUTHENTICATION UI
+# 4. AI ENGINE (FAIL-SAFE)
 # ---------------------------------------------------------
-def auth_page():
-    st.markdown("<h1 style='text-align: center;'>🔱 Ge'ez Scholar Login</h1>", unsafe_allow_html=True)
-    col1, col2, col3 = st.columns([1,2,1])
-    with col2:
-        tab1, tab2 = st.tabs(["Login", "Register"])
-        with tab1:
-            u = st.text_input("Username")
-            p = st.text_input("Password", type="password")
-            if st.button("Sign In"):
-                if u in st.session_state.users and st.session_state.users[u] == p:
-                    st.session_state.logged_in = True
-                    st.session_state.username = u
-                    st.rerun()
-                else: st.error("Invalid Credentials")
-        with tab2:
-            new_u = st.text_input("New Username")
-            new_p = st.text_input("New Password", type="password")
-            if st.button("Register"):
-                st.session_state.users[new_u] = new_p
-                st.success("Account Created! Please Login.")
-
-# ---------------------------------------------------------
-# 5. MAIN SYSTEM (GE'EZ SCHOLAR CORE)
-# ---------------------------------------------------------
-if not st.session_state.logged_in:
-    auth_page()
-else:
-    # API Setup
+if "GOOGLE_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-    model = genai.GenerativeModel('gemini-1.5-flash')
+else:
+    st.error("⚠️ API Key Missing!")
+    st.stop()
 
-    # Sidebar
-    with st.sidebar:
-        st.markdown(f"### 👑 Welcome, {st.session_state.username}")
+def ask_ai(prompt, context_text="", file_bytes=None, mime_type=None):
+    model = genai.GenerativeModel("gemini-1.5-flash")
+    full_prompt = f"Context from Document: {context_text}\n\nUser Question: {prompt}"
+    
+    if file_bytes and mime_type:
+        response = model.generate_content([full_prompt, {'mime_type': mime_type, 'data': file_bytes}])
+    else:
+        response = model.generate_content(full_prompt)
+    return response.text
+
+# ---------------------------------------------------------
+# 5. SIDEBAR: AUTH & PILLARS
+# ---------------------------------------------------------
+with st.sidebar:
+    st.markdown("<h1>🔱 GE'EZ STUDIO</h1>")
+    
+    if not st.session_state.logged_in:
+        st.markdown("<div class='auth-card'>", unsafe_allow_html=True)
+        tab_login, tab_reg = st.tabs(["Login", "Register"])
+        with tab_login:
+            u = st.text_input("Username", key="l_u")
+            p = st.text_input("Password", type="password", key="l_p")
+            if st.button("Login"):
+                if login_user(u, p): st.rerun()
+                else: st.error("Invalid credentials")
+        with tab_reg:
+            nu = st.text_input("New Username", key="r_u")
+            np = st.text_input("New Password", type="password", key="r_p")
+            if st.button("Register"):
+                if register_user(nu, np): st.success("Registered! Please Login.")
+                else: st.error("User exists")
+        st.markdown("</div>", unsafe_allow_html=True)
+        st.stop()
+    else:
+        st.write(f"👑 Welcome, **{st.session_state.username}**")
         if st.button("Logout"):
             st.session_state.logged_in = False
             st.rerun()
-        st.markdown("---")
-        portal = st.selectbox("Portals", ["Dashboard", "Neural Research Lab (Upload Files)", "History", "Business Hub"])
-        st.image("https://img.icons8.com/clouds/500/crown.png", width=100)
 
-    # PORTAL: DASHBOARD
-    if portal == "Dashboard":
-        st.title(f"Imperial Dashboard")
-        st.markdown(f"<div style='background: #fff; padding: 20px; border-radius: 15px; border-left: 10px solid gold;'><h4>Master Architect: Deacon Kewn Dejen</h4>ይህ ሲስተም ማንኛውንም ፋይል (PDF, Image, Video) የማንበብ እና በድምፅ የመመለስ አቅም አለው።</div>", unsafe_allow_html=True)
-        st.image("https://img.icons8.com/clouds/500/shrine.png", width=300)
+    st.markdown("---")
+    pillar = st.selectbox("የጥበብ ምሰሶ", ["🧠 AI Labs", "📜 Archives", "🎓 University", "💰 Strategic"])
+    tool = st.radio("Tools", ["Document Analyzer", "Voice Assistant", "Manuscript OCR", "History Vault"])
 
-    # PORTAL: RESEARCH LAB (FILE INTELLIGENCE)
-    elif portal == "Neural Research Lab (Upload Files)":
-        st.title("🧠 Neural Knowledge Integration")
-        uploaded_files = st.file_uploader("Upload PDF, Docx, Images, or Video", accept_multiple_files=True)
-        
-        context_text = ""
-        media_files = []
+# ---------------------------------------------------------
+# 6. MAIN CONTENT: FILE STORAGE & AI
+# ---------------------------------------------------------
+if st.session_state.logged_in:
+    st.markdown(f"<h1>{tool} Center</h1>", unsafe_allow_html=True)
 
-        if uploaded_files:
-            for f in uploaded_files:
-                if f.type in ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/html"]:
-                    context_text += f"\n[Document: {f.name}]\n" + extract_text(f)
-                    st.success(f"Loaded: {f.name}")
-                elif f.type.startswith("image/"):
-                    img = Image.open(f)
-                    media_files.append(img)
-                    st.image(img, caption=f.name, width=200)
-                elif f.type.startswith("video/"):
-                    st.video(f)
-                    st.info("Video loaded for analysis.")
+    # File Storage & Upload
+    with st.expander("📁 Upload & Store Documents (PDF, DOCX, Images, Video)"):
+        uploaded_file = st.file_uploader("Choose a file", type=['pdf', 'docx', 'html', 'png', 'jpg', 'jpeg', 'mp4'])
+        doc_context = ""
+        file_payload = None
+        m_type = None
 
-        query = st.text_input("Ask anything about your files...")
-        if query:
-            with st.spinner("Analyzing across all sources..."):
-                prompt = f"Context from uploaded files: {context_text}\n\nUser Question: {query}\n\n(Answer based ONLY on the provided files if relevant. If not, use your Ge'ez knowledge.)"
-                inputs = [prompt] + media_files
-                response = model.generate_content(inputs)
+        if uploaded_file:
+            if uploaded_file.type in ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]:
+                doc_context = extract_text(uploaded_file)
+                st.success(f"{uploaded_file.name} Loaded into AI Memory.")
+            elif uploaded_file.type.startswith("image/"):
+                file_payload = uploaded_file.read()
+                m_type = uploaded_file.type
+                st.image(uploaded_file, width=300)
+            elif uploaded_file.type.startswith("video/"):
+                file_payload = uploaded_file.read()
+                m_type = uploaded_file.type
+                st.video(uploaded_file)
+
+    # Chat Interface
+    if st.session_state.username not in st.session_state.chat_history:
+        st.session_state.chat_history[st.session_state.username] = []
+
+    # Display History
+    for chat in st.session_state.chat_history[st.session_state.username]:
+        with st.chat_message(chat["role"]): st.markdown(chat["content"])
+
+    # Input (Text or Voice placeholder)
+    prompt = st.chat_input("Ask the AI about your documents or Ge'ez wisdom...")
+    
+    # Voice Input Simulation
+    voice_on = st.checkbox("🎙️ Enable Voice Mode (Read Aloud)")
+
+    if prompt:
+        st.session_state.chat_history[st.session_state.username].append({"role": "user", "content": prompt})
+        with st.chat_message("user"): st.write(prompt)
+
+        with st.chat_message("assistant"):
+            with st.spinner("ሊቁ በማሰብ ላይ ነው..."):
+                answer = ask_ai(prompt, doc_context, file_payload, m_type)
+                st.markdown(answer)
                 
-                st.markdown("### AI Response")
-                st.write(response.text)
-                
-                # Voice Output
-                st.markdown(text_to_speech(response.text), unsafe_allow_html=True)
-                
-                # Save History
-                st.session_state.chat_history.append({"q": query, "a": response.text, "time": str(datetime.datetime.now())})
+                if voice_on:
+                    tts = gTTS(text=answer, lang='en') # Amharic support can be added if gTTS updated
+                    audio_fp = io.BytesIO()
+                    tts.write_to_fp(audio_fp)
+                    st.audio(audio_fp, format='audio/mp3')
 
-    # PORTAL: HISTORY
-    elif portal == "History":
-        st.title("📜 Chat History")
-        for h in st.session_state.chat_history[::-1]:
-            with st.expander(f"Query: {h['q']} ({h['time']})"):
-                st.write(h['a'])
-
-    # PORTAL: BUSINESS
-    elif portal == "Business Hub":
-        st.title("💰 Business & Licensing")
-        st.markdown(f"""
-        <div style='background: #fffdf5; padding: 30px; border-radius: 20px; border: 3px solid #d4af37; text-align: center;'>
-            <h3>የዲያቆን ከውን ደጀን የጥበብ ማዕከል</h3>
-            <p>የቴሌብር ቁጥር: 0980 520 360</p>
-            <p>CBE: 1000232328243</p>
-        </div>
-        """, unsafe_allow_html=True)
+                st.session_state.chat_history[st.session_state.username].append({"role": "assistant", "content": answer})
 
 # Footer
-st.markdown("---")
-st.markdown("<p style='text-align: center;'><b>PROUDLY DEVELOPED BY DEACON KEWN DEJEN</b></p>", unsafe_allow_html=True)
+st.markdown("<br><hr><p style='text-align:center; color:#FFD700;'><b>GE'EZ SCHOLAR AI STUDIO | Deacon Kewn Dejen</b><br>© 2026 Sovereign Edition</p>", unsafe_allow_html=True)
