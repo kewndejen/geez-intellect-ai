@@ -3,14 +3,14 @@ import google.generativeai as genai
 from PyPDF2 import PdfReader
 from docx import Document
 import time
+import random
 import datetime
-import io
 
 # ---------------------------------------------------------
-# 1. IMPERIAL GEMINI 3 CONFIGURATION
+# 1. IMPERIAL PAGE CONFIGURATION (Gemini 3 Standard)
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="GE'EZ STUDIO | Gemini 3 Sovereign",
+    page_title="GE'EZ STUDIO | Sovereign Absolute Infinity",
     page_icon="🔱",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -19,16 +19,14 @@ st.set_page_config(
 # Professional World-Class Sovereign UI (Emerald & Gold)
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Montserrat:wght@300;400;700&family=Abyssinica+SIL&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Montserrat:wght@400;700&family=Abyssinica+SIL&display=swap');
     
-    /* Background: Deep Imperial Emerald Gradient */
     .stApp { 
         background: radial-gradient(circle at center, #003311 0%, #001a0d 100%); 
         color: #ffffff; 
         font-family: 'Montserrat', sans-serif; 
     }
     
-    /* Headers: High Contrast Radiant Gold */
     h1, h2, h3 { 
         font-family: 'Cinzel Decorative', serif; 
         color: #FFD700 !important; 
@@ -36,29 +34,20 @@ st.markdown("""
         text-shadow: 0px 0px 20px rgba(255, 215, 0, 0.5);
     }
 
-    /* Sidebar Styling */
     [data-testid="stSidebar"] {
         background: linear-gradient(180deg, #001a0d 0%, #000a05 100%) !important;
         border-right: 4px solid #FFD700;
     }
     
-    /* Global Text Visibility */
-    p, span, label, div, .stMarkdown { 
-        color: #f8f9fa !important; 
-        font-size: 1.1rem; 
-        line-height: 1.8; 
+    .sovereign-card {
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(15px);
+        padding: 30px; border-radius: 20px;
+        border: 1px solid rgba(255, 215, 0, 0.4);
+        border-left: 15px solid #FFD700;
+        margin-bottom: 25px;
     }
 
-    /* Sovereign Document Vault Display */
-    .doc-vault {
-        background: rgba(255, 215, 0, 0.1);
-        border: 1px solid #FFD700;
-        padding: 15px;
-        border-radius: 12px;
-        margin-bottom: 20px;
-    }
-
-    /* Majestic Sovereign Buttons */
     .stButton>button {
         background: linear-gradient(135deg, #FFD700 0%, #B8860B 100%) !important;
         color: #000000 !important; font-weight: 900 !important;
@@ -72,20 +61,15 @@ st.markdown("""
         color: #ffffff !important;
     }
 
-    /* Chat Input Bar: White Surface */
     [data-testid="stChatInput"] { 
         border: 3px solid #FFD700 !important; 
         background-color: #ffffff !important; 
         border-radius: 20px !important; 
         padding: 8px !important;
     }
-    [data-testid="stChatInput"] textarea { 
-        color: #000000 !important; 
-        font-weight: bold !important; 
-        font-size: 1.2rem !important; 
-    }
+    [data-testid="stChatInput"] textarea { color: #000000 !important; font-weight: bold !important; font-size: 1.15rem !important; }
     
-    .wait-msg { color: #FFD700; font-style: italic; font-size: 1rem; text-align: center; }
+    .wait-msg { color: #FFD700; font-style: italic; font-size: 1rem; text-align: center; font-weight: bold; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 10px; }
     .citation { font-size: 0.85rem; color: #FFD700; border-top: 1px solid rgba(255,255,255,0.2); margin-top: 25px; padding-top: 15px; font-family: monospace; }
     </style>
     """, unsafe_allow_html=True)
@@ -108,12 +92,12 @@ def extract_text(uploaded_file):
         return f"Error reading file: {e}"
 
 # ---------------------------------------------------------
-# 3. INDESTRUCTIBLE ENGINE (Fail-Safe Discovery)
+# 3. INDESTRUCTIBLE ENGINE (Fail-Safe Multi-Model Logic)
 # ---------------------------------------------------------
 if "GOOGLE_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 else:
-    st.error("⚠️ API Key አልተገኘም! እባክዎ በ Secrets ውስጥ ያስገቡ።")
+    st.error("⚠️ API Key አልተገኘም!")
     st.stop()
 
 @st.cache_resource
@@ -129,12 +113,15 @@ def discover_engines():
 ACTIVE_MODELS = discover_engines()
 
 def ask_sovereign_scholar(prompt, tool_context, document_archive=""):
-    """TypeError እንዳይመጣ ሁልጊዜም 2 እሴቶችን የመመለስ ዋስትና ያለው ሎጂክ"""
+    """
+    በጭራሽ ተስፋ የማይቆርጥ ሎጂክ።
+    አንዱ ሞዴል ቢዘጋ ወደ ቀጣዩ፣ እሱም ቢዘጋ በራሱ ሰከንዶችን ቆጥሮ ደጋግሞ ይሞክራል።
+    """
     sys_instr = f"""
-    You are 'Ge'ez Scholar AI Master', a Gemini 3 standard intelligence created by Grand Architect Deacon Kewn Dejen.
-    Expertise: {tool_context}.
+    You are 'Ge'ez Scholar AI Master', the ultimate Gemini 3 standard intelligence created by Grand Architect Deacon Kewn Dejen.
+    Expertise Area: {tool_context}. Knowledge: 60 Pillars of Wisdom.
     
-    PRIMARY KNOWLEDGE SOURCE (DOCUMENT VAULT):
+    PRIMARY SOURCE (DOCUMENT VAULT):
     {document_archive[:25000]}
     
     Task: Provide scholarly, historical, and deep analysis. Support Ge'ez/Amharic.
@@ -142,10 +129,13 @@ def ask_sovereign_scholar(prompt, tool_context, document_archive=""):
     """
     
     status_placeholder = st.empty()
+    
     for model_name in ACTIVE_MODELS:
         try:
             model = genai.GenerativeModel(model_name=model_name, system_instruction=sys_instr)
-            for attempt in range(1, 3):
+            
+            # ተስፋ የማይቆርጥ የሙከራ ዑደት (Exponential Backoff)
+            for attempt in range(1, 4): 
                 try:
                     response = model.generate_content(prompt)
                     if response and response.text:
@@ -153,16 +143,16 @@ def ask_sovereign_scholar(prompt, tool_context, document_archive=""):
                         return response.text, model_name
                 except Exception as e:
                     if "429" in str(e):
-                        time.sleep(attempt * 7)
-                        status_placeholder.markdown(f"<div class='wait-msg'>⏳ ሊቁ በጥልቅ ምርምር ላይ ናቸው... ({model_name})</div>", unsafe_allow_html=True)
+                        wait = (attempt * 7) + random.random()
+                        status_placeholder.markdown(f"<div class='wait-msg'>⏳ ሊቁ በጥልቅ ምርምር ላይ ናቸው... (ሙከራ {attempt}/3 - {model_name})</div>", unsafe_allow_html=True)
+                        time.sleep(wait)
                         continue
                     break
         except:
             continue
             
     status_placeholder.empty()
-    # ERROR PATH: Still returns a tuple to prevent TypeError
-    return "❌ ሊቁ በአሁኑ ሰዓት መዛግብቱን ለመክፈት አልቻሉም። እባክዎ ገጹን Refresh አድርገው በድጋሚ ይሞክሩ።", "None"
+    return "❌ ሊቁ በአሁኑ ሰዓት መዛግብቱን ለመክፈት አልቻሉም። እባክዎ ከ1 ደቂቃ በኋላ ገጹን Refresh አድርገው በድጋሚ ይሞክሩ።", "None"
 
 # ---------------------------------------------------------
 # 4. SIDEBAR: THE ARK & DOCUMENT VAULT
@@ -170,7 +160,7 @@ def ask_sovereign_scholar(prompt, tool_context, document_archive=""):
 with st.sidebar:
     st.markdown("<h1>🔱 GE'EZ STUDIO</h1>", unsafe_allow_html=True)
     st.markdown(f"""
-        <div style='background:linear-gradient(45deg, #FFD700, #B8860B); padding:15px; border-radius:12px; text-align:center; color:#000; font-weight:900; border: 2px solid #fff;'>
+        <div style='background:linear-gradient(90deg, #FFD700, #B8860B); padding:15px; border-radius:12px; text-align:center; color:#000; font-weight:900; border: 2px solid #fff;'>
             GRAND ARCHITECT:<br>DEACON KEWN DEJEN
         </div>
     """, unsafe_allow_html=True)
@@ -192,17 +182,17 @@ with st.sidebar:
                     combined_text += f"\n[FILE: {f.name}]\n" + extract_text(f)
                 st.session_state.global_memory = combined_text
                 st.session_state.file_names = current_names
-                st.success(f"✅ {len(uploaded_files)} ሰነዶች ተነበዋል!")
+                st.success(f"✅ {len(uploaded_files)} ሰነዶች ወደ መዝገቡ ገብተዋል!")
 
     st.markdown("---")
-    pillar = st.selectbox("የጥበብ ምሰሶ (Pillar)", [
+    pillar = st.selectbox("የጥበብ ምሰሶ ይምረጡ", [
         "Advanced AI Labs", "Digital Archives", "Heritage & Science",
         "Imperial University", "Mysticism & Qene", "Strategic Wealth"
     ])
 
-    # 60 Tools Detailed Map
+    # 60 Tools Organized
     tools_map = {
-        "Advanced AI Labs": ["Manuscript OCR", "Linguistic Bridge", "Script Authentication", "Root Finder", "Neural Translation", "Syntax Analyzer", "Ge'ez NLP", "Dialect Study", "Semantic Map", "Voice of Wisdom"],
+        "Advanced AI Labs": ["Manuscript OCR", "Linguistic Bridge", "Script Authentication", "Root Finder", "Voice of Wisdom", "Neural Translation", "Syntax Analyzer", "Ge'ez NLP", "Dialect Study", "Semantic Map"],
         "Digital Archives": ["Universal Library", "Fetha Nagast AI", "Synaxarium Analysis", "Royal Decrees", "Treaty Expert", "Kibre Nagast Hub", "Ecclesiastical Law", "Genealogy Map", "Preservation Lab", "Hagiography Lab"],
         "Heritage & Science": ["Ancient Medicine", "Archeology Hub", "Heritage Map", "Iconography Vision", "Architecture AI", "Geology of Axum", "Botany Hub", "Zoology Hub", "Ink Chemistry", "Virtual Museum"],
         "Imperial University": ["Bahre Hasab Pro", "Abu Shaker Astronomy", "Numerology Lab", "Scribe Assistant", "Font Converter", "Ethiopic Math", "Philosophy Hub", "History Chronology", "University Portal", "Scholarly Citation"],
@@ -224,7 +214,7 @@ with st.sidebar:
 st.markdown(f"<h1>{tool}</h1>", unsafe_allow_html=True)
 
 if st.session_state.file_names:
-    with st.expander("📝 በመዝገብ ላይ ያሉ ሰነዶች (Archive Content)"):
+    with st.expander("📝 በመዝገብ ላይ ያሉ ሰነዶች (Archive)"):
         for name in st.session_state.file_names:
             st.write(f"🔹 {name}")
 
@@ -240,12 +230,11 @@ if prompt := st.chat_input(f"Consult the {tool} expert about your documents...")
 
     with st.chat_message("assistant"):
         with st.spinner("ሊቁ ሰነዶቹን በጥልቀት እያመሳከረ ነው..."):
-            # The unpacking now always receives exactly 2 values
             answer, engine = ask_sovereign_scholar(prompt, tool, st.session_state.global_memory)
             
             full_res = f"""
             <div style='color: white; line-height: 1.8;'>{answer}</div>
-            <div class='citation'>Source: {engine} | Gemini 3 Sovereign Zenith</div>
+            <div class='citation'>Source: {engine} | v5.0 Sovereign Absolute Infinity</div>
             """
             st.markdown(full_res, unsafe_allow_html=True)
             st.session_state.messages.append({"role": "assistant", "content": full_res})
