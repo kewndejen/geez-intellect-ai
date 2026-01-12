@@ -49,7 +49,8 @@ st.markdown("""
         background: rgba(255, 255, 255, 0.12);
         backdrop-filter: blur(15px);
         padding: 30px; border-radius: 20px;
-        border: 1px solid #FFD700;
+        border: 1px solid rgba(255, 215, 0, 0.4);
+        border-left: 15px solid #FFD700;
         margin-bottom: 25px;
         box-shadow: 0 15px 45px rgba(0,0,0,0.6);
     }
@@ -59,19 +60,24 @@ st.markdown("""
         color: #000000 !important; font-weight: 900 !important;
         border-radius: 12px !important; border: 2px solid #FFFFFF !important;
         height: 3.8em; width: 100%; transition: 0.5s ease;
-        text-transform: uppercase;
+        text-transform: uppercase; letter-spacing: 1px;
     }
-    .stButton>button:hover { transform: translateY(-3px); box-shadow: 0 0 35px #FFD700; }
+    .stButton>button:hover { 
+        transform: translateY(-3px); 
+        box-shadow: 0 0 35px #FFD700; 
+        color: #fff !important;
+    }
 
     [data-testid="stChatInput"] { 
         border: 3px solid #FFD700 !important; 
         background-color: #ffffff !important; 
-        border-radius: 15px !important; 
+        border-radius: 20px !important; 
+        padding: 8px !important;
     }
     [data-testid="stChatInput"] textarea { color: #000000 !important; font-weight: bold !important; font-size: 1.2rem !important; }
     
-    .wait-msg { color: #FFD700; font-style: italic; font-size: 1rem; text-align: center; font-weight: bold; }
-    .citation { font-size: 0.85rem; color: #FFD700; border-top: 1px solid #ffffff; margin-top: 25px; padding-top: 15px; font-family: monospace; }
+    .wait-msg { color: #FFD700; font-style: italic; font-size: 1rem; text-align: center; font-weight: bold; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 10px; }
+    .citation { font-size: 0.85rem; color: #FFD700; border-top: 1px solid rgba(255,255,255,0.2); margin-top: 25px; padding-top: 15px; font-family: monospace; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -93,35 +99,41 @@ def extract_text_from_file(uploaded_file):
         return f"Error reading file: {e}"
 
 # ---------------------------------------------------------
-# 3. INDESTRUCTIBLE AI ENGINE (Auto-Retry Failover)
+# 3. INDESTRUCTIBLE AI ENGINE (Multi-Model Failover)
 # ---------------------------------------------------------
 if "GOOGLE_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 else:
-    st.error("⚠️ API Key አልተገኘም!")
+    st.error("⚠️ API Key አልተገኘም! እባክዎ በ Secrets ውስጥ GOOGLE_API_KEY ያስገቡ።")
     st.stop()
 
-# የተረጋጉ ሞዴሎች ቅደም ተከተል (Flash መጀመሪያ - ለሰፊ ኮታ)
-STABLE_MODELS = ['gemini-1.5-flash', 'gemini-2.0-flash-exp', 'gemini-1.5-pro']
+@st.cache_resource
+def discover_engines():
+    try:
+        available = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+        priority = ["models/gemini-1.5-flash", "models/gemini-1.5-pro", "models/gemini-pro"]
+        working = [p for p in priority if p in available]
+        return working if working else [available[0]]
+    except:
+        return ["models/gemini-1.5-flash"]
+
+ACTIVE_MODELS = discover_engines()
 
 def ask_sovereign_scholar(prompt, tool_context, document_text=""):
     sys_instr = f"""
-    You are 'Ge'ez Scholar AI Master', the ultimate expert created by Grand Architect Deacon Kewn Dejen.
+    You are 'Ge'ez Scholar AI Master', the ultimate expert developed by Grand Architect Deacon Kewn Dejen.
     Current Specialized Pillar: {tool_context}.
-    Task: Provide scholarly, historical, and deep analysis in Ge'ez/Amharic.
-    Primary Reference Document: {document_text[:12000]}
-    Instructions:
-    1. If the info is in the document, use it. 2. Support phonetic Ge'ez typing. 3. Be wise and authoritative.
+    Task: Provide scholarly, historical, and deep analysis in Ge'ez, Amharic, or English.
+    Primary Reference Document: {document_text[:15000]}
+    Tone: Sovereign, authoritative, ancient, and extremely wise.
+    Support phonetic Ge'ez typing. Avoid repetitive greetings.
     """
     
     status_placeholder = st.empty()
-    
-    # ተስፋ የማይቆርጥ ሎጂክ (Auto-Retry across models)
-    for model_name in STABLE_MODELS:
+    for model_name in ACTIVE_MODELS:
         try:
             model = genai.GenerativeModel(model_name=model_name, system_instruction=sys_instr)
-            # ለእያንዳንዱ ሞዴል 3 ጊዜ በራሱ ይሞክራል (429 ካጋጠመው)
-            for attempt in range(1, 4):
+            for attempt in range(1, 3):
                 try:
                     response = model.generate_content(prompt)
                     if response and response.text:
@@ -129,31 +141,33 @@ def ask_sovereign_scholar(prompt, tool_context, document_text=""):
                         return response.text, model_name
                 except Exception as e:
                     if "429" in str(e):
-                        wait = (attempt * 5) + random.random()
-                        status_placeholder.markdown(f"<div class='wait-msg'>⏳ ሊቁ በጥልቅ ምርምር ላይ ናቸው... (ሙከራ {attempt}/3 - {model_name})</div>", unsafe_allow_html=True)
-                        time.sleep(wait) # ራሱ ታግሶ እንዲሞክር ያደርጋል
+                        time.sleep(attempt * 7)
+                        status_placeholder.markdown(f"<div class='wait-msg'>⏳ ሊቁ በጥልቅ ምርምር ላይ ናቸው... ({model_name})</div>", unsafe_allow_html=True)
                         continue
-                    break # ሌሎች ስህተቶች ካሉ ወደ ቀጣዩ ሞዴል ይዞራል
+                    break
         except:
             continue
             
     status_placeholder.empty()
-    return "❌ ሊቁ በአሁኑ ሰዓት መዛግብቱን ለመክፈት አልቻሉም (ኮታ አልቋል)። እባክዎ ከ1 ደቂቃ በኋላ ገጹን Refresh አድርገው ይሞክሩ።", "None"
+    return "❌ ሊቁ በአሁኑ ሰዓት መዛግብቱን ለመክፈት አልቻሉም። እባክዎ ገጹን Refresh አድርገው በድጋሚ ይሞክሩ።", "None"
 
 # ---------------------------------------------------------
-# 4. SIDEBAR: THE ARK OF 60 PILLARS
+# 4. SIDEBAR: THE ARK OF 60 PILLARS (Full Integration)
 # ---------------------------------------------------------
 with st.sidebar:
     st.markdown("<h1>🔱 GE'EZ STUDIO</h1>", unsafe_allow_html=True)
-    st.markdown(f"<div style='background:#FFD700; padding:15px; border-radius:12px; text-align:center; color:#000; font-weight:900; border: 2px solid #fff;'>GRAND ARCHITECT:<br>DEACON KEWN DEJEN</div>", unsafe_allow_html=True)
+    st.markdown(f"""
+        <div style='background:linear-gradient(45deg, #FFD700, #B8860B); padding:15px; border-radius:12px; text-align:center; color:#000; font-weight:900; border: 2px solid #fff;'>
+            GRAND ARCHITECT:<br>DEACON KEWN DEJEN
+        </div>
+    """, unsafe_allow_html=True)
     st.markdown("---")
     
-    pillar = st.selectbox("የጥበብ ምሰሶ", [
+    pillar = st.selectbox("የጥበብ ምሰሶ ይምረጡ", [
         "🧠 Advanced AI Labs", "📜 Digital Archives", "🏛️ Heritage & Science",
         "🎓 Imperial University", "🔮 Mysticism & Qene", "💰 Strategic Wealth"
     ])
 
-    # 60 Tools Organized
     tools_map = {
         "🧠 Advanced AI Labs": ["Manuscript OCR", "Linguistic Bridge", "Script Authentication", "Root Finder", "Voice of Wisdom", "Neural Translation", "Syntax Analyzer", "Ge'ez NLP", "Dialect Study", "Semantic Map"],
         "📜 Digital Archives": ["Universal Library", "Fetha Nagast AI", "Synaxarium Analysis", "Royal Decrees", "Treaty Expert", "Kibre Nagast Hub", "Ecclesiastical Law", "Genealogy Map", "Preservation Lab", "Hagiography Lab"],
@@ -165,11 +179,15 @@ with st.sidebar:
     tool = st.radio("Labs", tools_map[pillar])
 
     st.markdown("---")
-    uploaded_file = st.file_uploader("📚 የመረጃ ምንጭ (PDF/Word)", type=['pdf', 'docx'])
+    uploaded_file = st.file_uploader("📚 የመረጃ ምንጭ ይጫኑ (PDF/Word)", type=['pdf', 'docx'])
     source_text = ""
     if uploaded_file:
         source_text = extract_text_from_file(uploaded_file)
-        st.success("መጽሐፉ ተነቧል!")
+        st.success("✅ ፋይሉ ተነቧል!")
+
+    if st.button("🔄 REBOOT SYSTEM"):
+        st.cache_resource.clear()
+        st.rerun()
 
 # ---------------------------------------------------------
 # 5. MAIN WORKSPACE
@@ -184,13 +202,13 @@ for m in st.session_state.messages:
 if prompt := st.chat_input(f"Consult the {tool} expert..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
-        st.markdown(f"<b>{prompt}</b>", unsafe_allow_html=True)
+        st.markdown(f"<div style='color: white;'><b>{prompt}</b></div>", unsafe_allow_html=True)
 
     with st.chat_message("assistant"):
         with st.spinner("ሊቁ መዛግብቱን በጥልቀት እያመሳከረ ነው..."):
             answer, engine = ask_sovereign_scholar(prompt, tool, source_text)
-            full_res = f"<div>{answer}</div><div class='citation'>Source: {engine} | v3.0 Masterpiece</div>"
+            full_res = f"<div>{answer}</div><div class='citation'>Source: {engine} | Masterpiece v-Eternal</div>"
             st.markdown(full_res, unsafe_allow_html=True)
             st.session_state.messages.append({"role": "assistant", "content": full_res})
 
-st.markdown("<br><hr><p style='text-align:center; color:#FFD700;'><b>GE'EZ SCHOLAR AI STUDIO | Grand Architect Deacon Kewn Dejen</b></p>", unsafe_allow_html=True)
+st.markdown("<br><hr><p style='text-align:center; color:#FFD700;'><b>GE'EZ SCHOLAR AI STUDIO | Grand Architect Deacon Kewn Dejen</b><br>© 2024-2025 ALL RIGHTS RESERVED | THE MASTERPIECE EDITION</p>", unsafe_allow_html=True)
