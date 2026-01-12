@@ -1,0 +1,22 @@
+.gitignore
+gitignore
+
+# API keys and secrets
+.env
+*.env
+secrets.toml
+
+# Database
+*.db
+*.sqlite3
+
+# Logs
+*.log
+error_log.txt
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
