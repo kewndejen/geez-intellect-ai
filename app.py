@@ -3,7 +3,159 @@ import google.generativeai as genai
 import time
 import os
 from PIL import Image
-import PyPDF2
+import PyPDF2import streamlit as st
+
+# --- PAGE CONFIGURATION ---
+st.set_page_config(
+    page_title="Ge’ez Scholar AI Studio",
+    page_icon="🔱",
+    layout="wide",
+)
+
+# --- CUSTOM CSS (Emerald & Gold Theme) ---
+st.markdown("""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Fauna+One&display=swap');
+
+    :root {
+        --emerald: #043927;
+        --gold: #D4AF37;
+        --dark-bg: #021a12;
+    }
+
+    /* Main Background */
+    .stApp {
+        background-color: var(--dark-bg);
+        color: #e0e0e0;
+    }
+
+    /* Headers */
+    h1, h2, h3 {
+        font-family: 'Cinzel', serif !important;
+        color: var(--gold) !important;
+        text-align: center;
+    }
+
+    /* Buttons */
+    .stButton>button {
+        background-color: var(--emerald);
+        color: var(--gold);
+        border: 2px solid var(--gold);
+        border-radius: 0px;
+        font-family: 'Cinzel', serif;
+        width: 100%;
+        transition: 0.3s;
+    }
+
+    .stButton>button:hover {
+        background-color: var(--gold);
+        color: var(--emerald);
+    }
+
+    /* Cards/Sections */
+    .feature-card {
+        background: rgba(4, 57, 39, 0.3);
+        padding: 30px;
+        border-radius: 10px;
+        border-left: 5px solid var(--gold);
+        height: 100%;
+    }
+
+    /* Footer */
+    .footer {
+        text-align: center;
+        padding: 50px;
+        font-family: 'Fauna One', serif;
+        color: #888;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+# --- NAVIGATION ---
+st.sidebar.image("https://img.icons8.com/ios-filled/100/D4AF37/pillar.png") # Placeholder for Logo
+st.sidebar.title("Ge'ez Navigation")
+menu = st.sidebar.radio("Go to", ["Home", "Studio Access", "About the Scholar", "Contact"])
+
+# --- HOME SECTION ---
+if menu == "Home":
+    # Hero Section
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.markdown("<h1>🔱 GE’EZ SCHOLAR AI STUDIO 🔱</h1>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color: white !important;'>Sovereign Intelligence. Ancient Wisdom.</h3>", unsafe_allow_html=True)
+    st.write("<p style='text-align: center; font-size: 1.2em;'>A sovereign-grade AI research hub empowering scholars with document intelligence, visual cognition, and divine reasoning.</p>", unsafe_allow_html=True)
+    
+    st.markdown("---")
+
+    # Features Section
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.markdown("""
+        <div class="feature-card">
+            <h3>📚 Document Knowledge</h3>
+            <p>Deep semantic querying of PDF and DOCX archives using multi-modal Gemini architecture.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col2:
+        st.markdown("""
+        <div class="feature-card">
+            <h3>👁 Visual OCR Lab</h3>
+            <p>Advanced image and video processing for visual intelligence and script deciphering.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col3:
+        st.markdown("""
+        <div class="feature-card">
+            <h3>🔊 Voice of Wisdom</h3>
+            <p>Immersive text-to-speech interaction in English and Amharic for an oral tradition experience.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+# --- STUDIO ACCESS (Login Mockup) ---
+elif menu == "Studio Access":
+    st.markdown("<h2>🛡 Portal Authentication</h2>", unsafe_allow_html=True)
+    
+    tab1, tab2 = st.tabs(["Login", "Register"])
+    
+    with tab1:
+        st.text_input("Scholar ID")
+        st.text_input("Access Key", type="password")
+        if st.button("Enter the Sanctum"):
+            st.success("Welcome, Scholar. Initializing Ge'ez Environment...")
+
+    with tab2:
+        st.text_input("Full Name")
+        st.text_input("Email Address")
+        st.text_input("Create Access Key", type="password")
+        st.button("Request Membership")
+
+# --- CONTACT SECTION ---
+elif menu == "Contact":
+    st.markdown("<h2>📜 Reach the Council</h2>", unsafe_allow_html=True)
+    
+    col_a, col_b = st.columns(2)
+    with col_a:
+        st.write("### Digital Coordinates")
+        st.write("📧 **Email:** contact@geezscholar.ai")
+        st.write("📍 **Location:** Digital Diaspora / Addis Ababa")
+        st.write("🌐 **Socials:** [LinkedIn](#) | [GitHub](#) | [Twitter](#)")
+
+    with col_b:
+        st.write("### Send a Message")
+        st.text_input("Name")
+        st.text_area("Your Inquiry")
+        st.button("Send Dispatch")
+
+# --- FOOTER ---
+st.markdown("""
+    <div class="footer">
+        <hr style="border: 0.5px solid #D4AF37;">
+        <p>© 2024 Ge’ez Scholar AI Studio. All Rights Reserved. <br> 
+        <i>"Knowledge is the light of the soul."</i></p>
+    </div>
+    """, unsafe_allow_html=True)
 from docx import Document
 from gtts import gTTS
 import io
